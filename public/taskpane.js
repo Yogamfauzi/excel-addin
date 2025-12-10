@@ -46,7 +46,7 @@ function makeAllFieldsEditable() {
     if (el) {
       el.removeAttribute("readonly");
       el.classList.remove("bg-red", "bg-yellow", "bg-blue", "bg-grey", "bg-green");
-      el["style"].backgroundColor = "#ffffff";
+      el.style.backgroundColor = "#ffffff";
     }
   });
 
@@ -55,7 +55,9 @@ function makeAllFieldsEditable() {
     if (input.id && input.id.indexOf("Total_") === 0) {
       input.setAttribute("readonly", "true");
       input["style"].backgroundColor = "#f0f0f0";
+
     } else {
+
       input.removeAttribute("readonly");
       input.removeAttribute("disabled");
     }
@@ -63,13 +65,13 @@ function makeAllFieldsEditable() {
 }
 
 function handleDatalistFocus(el) {
-  el.dataset.oldValue = el["value"];
-  el["value"] = "";
+  el.dataset.oldValue = el.value;
+  el.value = "";
 }
 
 function handleDatalistBlur(el) {
-  if (el["value"] === "") {
-    el["value"] = el.dataset.oldValue || "";
+  if (el.value === "") {
+    el.value = el.dataset.oldValue || "";
   }
 }
 
@@ -337,7 +339,7 @@ function setupEventListeners() {
     }
   });
 
-  for (var i = 1; i <= 10; i++) {
+  for (var i = 1; i <= 15; i++) {
     var wasteEl = document.getElementById("Waste" + i);
     if (wasteEl) wasteEl.addEventListener("input", hitungTotalWaste);
   }
@@ -440,7 +442,7 @@ function onLineChange() {
   hitungTargetOEE();
   loadHiddenMachineMaps();
   loadRejectMaps();
-  loadMachineByLine(line).then(function () {});
+  loadMachineByLine(line).then(function () { });
 }
 
 function onLeaderChange() {
@@ -546,7 +548,6 @@ function hitungIntervalHour() {
   var end = parseTime(endStr);
   if (end < current) end = end + 24 * 60;
 
-  // 1. Loop 1-10: Hitung Waktu Produksi (Linear)
   for (var i = 1; i <= 10; i++) {
     var hourLabel = "";
     if (current < end) {
@@ -560,7 +561,9 @@ function hitungIntervalHour() {
       hourLabel = sLabel + " - " + eLabel;
       current = next;
     } else {
-      hourLabel = "NONE";
+      if (i === 9) hourLabel = "OT1";
+      else if (i === 10) hourLabel = "OT2";
+      else hourLabel = "NONE";
     }
     setValue("Hour" + i, hourLabel);
 
@@ -579,7 +582,6 @@ function hitungIntervalHour() {
     }
   }
 
-  // 2. Loop 11-20: Mirroring (Copy dari 1-10)
   for (var k = 11; k <= 20; k++) {
     var sourceIdx = k - 10;
     var mirrorVal = getValue("Hour" + sourceIdx);
@@ -1459,9 +1461,7 @@ async function handleSubmit() {
         var downtimeGroups = {};
 
         for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-          var cat = getValue("Category" + i)
-            .trim()
-            .toUpperCase();
+          var cat = getValue("Category" + i).trim().toUpperCase();
           var mach = getValue("Machine" + i).trim();
           var desc = getValueOrNone("Description" + i);
           if (desc === "NONE") desc = "";
@@ -1477,29 +1477,21 @@ async function handleSubmit() {
         var priorityKeys = ["TEMUAN ABNORMALITY", "ISSUE SAFETY", "ISSUE QUALITY"];
         function formatBlock(catName, group) {
           var blk = catName + " (Total " + group.total + " Menit)\n";
-          group.items.forEach(function (item, idx) {
-            blk += "    " + (idx + 1) + ". " + item + "\n";
-          });
+          group.items.forEach(function (item, idx) { blk += "    " + (idx + 1) + ". " + item + "\n"; });
           blk += "\n";
           return blk;
         }
         priorityKeys.forEach(function (key) {
-          if (downtimeGroups[key]) {
-            noteResult += formatBlock(key, downtimeGroups[key]);
-            delete downtimeGroups[key];
-          }
+          if (downtimeGroups[key]) { noteResult += formatBlock(key, downtimeGroups[key]); delete downtimeGroups[key]; }
         });
-        for (var key in downtimeGroups) {
-          noteResult += formatBlock(key, downtimeGroups[key]);
-        }
+        for (var key in downtimeGroups) { noteResult += formatBlock(key, downtimeGroups[key]); }
 
-        // PERBAIKAN TIPE DATA DI SINI
         var oeePct = (Number(oeeResult) * 100).toFixed(2);
         var targetPct = (targetOEEVal * 100).toFixed(2);
 
-        var statusOEE = parseFloat(oeePct) >= parseFloat(targetPct) ? "Tercapai" : "Tidak Tercapai";
+        var statusOEE = (parseFloat(oeePct) >= parseFloat(targetPct)) ? "Tercapai" : "Tidak Tercapai";
         var selisih = Math.abs(parseFloat(oeePct) - parseFloat(targetPct)).toFixed(2);
-        var ketSelisih = parseFloat(oeePct) >= parseFloat(targetPct) ? "Lebih" : "Kurang";
+        var ketSelisih = (parseFloat(oeePct) >= parseFloat(targetPct)) ? "Lebih" : "Kurang";
 
         var footer = "\n---\n";
         footer += "Pencapaian OEE : " + oeePct + "%\n";
@@ -1540,7 +1532,6 @@ async function handleSubmit() {
       if (rowsDTArray.length > 0) tblDowntime.rows.add(null, rowsDTArray);
 
       var dataDetail = { Source: saveID };
-      // PERBAIKAN VARIABLE NAMA DI SINI (mach -> machIdx)
       for (var machIdx = 1; machIdx <= 13; machIdx++) {
         dataDetail["Machine" + machIdx] = getValue("TUTMachine" + machIdx);
       }
@@ -1548,7 +1539,7 @@ async function handleSubmit() {
         masterData.categoryMapping.forEach(function (cat) {
           for (var v = 1; v <= 13; v++) {
             var valDetail = getValue(cat.short + v);
-            dataDetail[cat.short + v] = valDetail === "" || valDetail === null ? 0 : valDetail;
+            dataDetail[cat.short + v] = (valDetail === "" || valDetail === null) ? 0 : valDetail;
           }
         });
       }
@@ -1598,8 +1589,6 @@ function mapDataToRow(excelColumns, dataObject) {
   }
   return rowArray;
 }
-// ✅ KODE BARU (dengan konfirmasi yang lebih aman)
-// Variable global untuk menyimpan ID yang akan dihapus
 var pendingDeleteID = "";
 
 async function handleDelete() {
@@ -1613,7 +1602,6 @@ async function handleDelete() {
     return;
   }
 
-  // Simpan ID dan tampilkan modal
   pendingDeleteID = id;
   document.getElementById("modalIDDisplay").innerText = id;
   document.getElementById("deleteModal").style.display = "flex";
@@ -1626,7 +1614,6 @@ function closeDeleteModal() {
 }
 
 async function confirmDelete() {
-  // Tutup modal
   document.getElementById("deleteModal").style.display = "none";
 
   var id = pendingDeleteID;
@@ -1777,7 +1764,6 @@ function formatExcelTime(excelVal) {
   }
   return excelVal;
 }
-// ✅ GANTI SELURUH FUNGSI deleteRowByID DENGAN INI
 async function deleteRowByID(context, table, id) {
   var bodyRange = table.getDataBodyRange().load("values");
   var headerRange = table.getHeaderRowRange().load("values");
