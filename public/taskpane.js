@@ -337,7 +337,7 @@ function setupEventListeners() {
     }
   });
 
-  for (var i = 1; i <= 15; i++) {
+  for (var i = 1; i <= 10; i++) {
     var wasteEl = document.getElementById("Waste" + i);
     if (wasteEl) wasteEl.addEventListener("input", hitungTotalWaste);
   }
@@ -637,7 +637,7 @@ function hitungTotalPcs() {
 
 function hitungTotalWaste() {
   var sum = 0;
-  for (var i = 1; i <= 15; i++) {
+  for (var i = 1; i <= 10; i++) {
     sum += parseFloat(getValue("Waste" + i)) || 0;
   }
   setValue("TotalWaste", sum);
@@ -1459,7 +1459,9 @@ async function handleSubmit() {
         var downtimeGroups = {};
 
         for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-          var cat = getValue("Category" + i).trim().toUpperCase();
+          var cat = getValue("Category" + i)
+            .trim()
+            .toUpperCase();
           var mach = getValue("Machine" + i).trim();
           var desc = getValueOrNone("Description" + i);
           if (desc === "NONE") desc = "";
@@ -1475,22 +1477,29 @@ async function handleSubmit() {
         var priorityKeys = ["TEMUAN ABNORMALITY", "ISSUE SAFETY", "ISSUE QUALITY"];
         function formatBlock(catName, group) {
           var blk = catName + " (Total " + group.total + " Menit)\n";
-          group.items.forEach(function (item, idx) { blk += "    " + (idx + 1) + ". " + item + "\n"; });
+          group.items.forEach(function (item, idx) {
+            blk += "    " + (idx + 1) + ". " + item + "\n";
+          });
           blk += "\n";
           return blk;
         }
         priorityKeys.forEach(function (key) {
-          if (downtimeGroups[key]) { noteResult += formatBlock(key, downtimeGroups[key]); delete downtimeGroups[key]; }
+          if (downtimeGroups[key]) {
+            noteResult += formatBlock(key, downtimeGroups[key]);
+            delete downtimeGroups[key];
+          }
         });
-        for (var key in downtimeGroups) { noteResult += formatBlock(key, downtimeGroups[key]); }
+        for (var key in downtimeGroups) {
+          noteResult += formatBlock(key, downtimeGroups[key]);
+        }
 
         // PERBAIKAN TIPE DATA DI SINI
         var oeePct = (Number(oeeResult) * 100).toFixed(2);
         var targetPct = (targetOEEVal * 100).toFixed(2);
 
-        var statusOEE = (parseFloat(oeePct) >= parseFloat(targetPct)) ? "Tercapai" : "Tidak Tercapai";
+        var statusOEE = parseFloat(oeePct) >= parseFloat(targetPct) ? "Tercapai" : "Tidak Tercapai";
         var selisih = Math.abs(parseFloat(oeePct) - parseFloat(targetPct)).toFixed(2);
-        var ketSelisih = (parseFloat(oeePct) >= parseFloat(targetPct)) ? "Lebih" : "Kurang";
+        var ketSelisih = parseFloat(oeePct) >= parseFloat(targetPct) ? "Lebih" : "Kurang";
 
         var footer = "\n---\n";
         footer += "Pencapaian OEE : " + oeePct + "%\n";
@@ -1539,7 +1548,7 @@ async function handleSubmit() {
         masterData.categoryMapping.forEach(function (cat) {
           for (var v = 1; v <= 13; v++) {
             var valDetail = getValue(cat.short + v);
-            dataDetail[cat.short + v] = (valDetail === "" || valDetail === null) ? 0 : valDetail;
+            dataDetail[cat.short + v] = valDetail === "" || valDetail === null ? 0 : valDetail;
           }
         });
       }
@@ -1589,41 +1598,112 @@ function mapDataToRow(excelColumns, dataObject) {
   }
   return rowArray;
 }
+// ✅ KODE BARU (dengan konfirmasi yang lebih aman)
+// Variable global untuk menyimpan ID yang akan dihapus
+var pendingDeleteID = "";
+
 async function handleDelete() {
+  console.log("=== FUNGSI HAPUS DIPANGGIL ===");
+
   var id = getValue("KolomEdit");
+  console.log("ID yang diambil:", id);
+
   if (!id) {
     showNotification("Masukkan ID untuk dihapus!", "error");
     return;
   }
-  var confirmDelete = confirm("Apakah Anda yakin ingin menghapus data dengan ID: " + id + "?");
-  if (!confirmDelete) return;
+
+  // Simpan ID dan tampilkan modal
+  pendingDeleteID = id;
+  document.getElementById("modalIDDisplay").innerText = id;
+  document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeleteModal() {
+  document.getElementById("deleteModal").style.display = "none";
+  pendingDeleteID = "";
+  showNotification("Penghapusan dibatalkan", "error");
+}
+
+async function confirmDelete() {
+  // Tutup modal
+  document.getElementById("deleteModal").style.display = "none";
+
+  var id = pendingDeleteID;
+  pendingDeleteID = "";
+
+  if (!id) {
+    showNotification("ID tidak valid!", "error");
+    return;
+  }
+
+  console.log("Konfirmasi diterima, melanjutkan hapus untuk ID:", id);
+  showNotification("🔄 Memproses penghapusan...", "success");
+
   try {
     await Excel.run(async function (context) {
+      console.log("Masuk ke Excel.run");
+
       var sheetMain = context.workbook.worksheets.getItemOrNullObject("Input Shiftly");
       var sheetDown = context.workbook.worksheets.getItemOrNullObject("Input Downtime");
       await context.sync();
+
       if (sheetMain.isNullObject || sheetDown.isNullObject) {
         showNotification("Sheet tidak ditemukan", "error");
         return;
       }
+
       var tblMain = sheetMain.tables.getItemOrNullObject("TableLaporanAkhir");
       var tblDown = sheetDown.tables.getItemOrNullObject("DowntimeTable");
       var tblDetail = sheetDown.tables.getItemOrNullObject("DetailDowntimeTable");
       var tblReject = sheetDown.tables.getItemOrNullObject("IsiRejectTable");
       await context.sync();
-      if (!tblMain.isNullObject) await deleteRowByID(context, tblMain, id);
-      if (!tblDown.isNullObject) await deleteRowByID(context, tblDown, id);
-      if (!tblDetail.isNullObject) await deleteRowByID(context, tblDetail, id);
-      if (!tblReject.isNullObject) await deleteRowByID(context, tblReject, id);
+
+      var deletedCount = 0;
+
+      console.log("Mulai hapus dari tabel...");
+
+      if (!tblMain.isNullObject) {
+        console.log("Hapus dari TableLaporanAkhir...");
+        var count = await deleteRowByID(context, tblMain, id);
+        console.log("Terhapus dari TableLaporanAkhir:", count);
+        deletedCount += count;
+      }
+      if (!tblDown.isNullObject) {
+        console.log("Hapus dari DowntimeTable...");
+        var count = await deleteRowByID(context, tblDown, id);
+        console.log("Terhapus dari DowntimeTable:", count);
+        deletedCount += count;
+      }
+      if (!tblDetail.isNullObject) {
+        console.log("Hapus dari DetailDowntimeTable...");
+        var count = await deleteRowByID(context, tblDetail, id);
+        console.log("Terhapus dari DetailDowntimeTable:", count);
+        deletedCount += count;
+      }
+      if (!tblReject.isNullObject) {
+        console.log("Hapus dari IsiRejectTable...");
+        var count = await deleteRowByID(context, tblReject, id);
+        console.log("Terhapus dari IsiRejectTable:", count);
+        deletedCount += count;
+      }
+
       await context.sync();
-      showNotification("Data berhasil dihapus!", "success");
-      setTimeout(function () {
-        location.reload();
-      }, 2000);
+
+      console.log("Total baris terhapus:", deletedCount);
+
+      if (deletedCount > 0) {
+        showNotification("✅ BERHASIL! Terhapus " + deletedCount + " baris dengan ID: " + id, "success");
+        setTimeout(function () {
+          location.reload();
+        }, 2000);
+      } else {
+        showNotification("❌ ID '" + id + "' tidak ditemukan di database!", "error");
+      }
     });
   } catch (e) {
-    console.error(e);
-    showNotification("Gagal hapus data", "error");
+    console.error("Error saat hapus:", e);
+    showNotification("Gagal hapus data: " + e.message, "error");
   }
 }
 function getValue(id) {
@@ -1697,26 +1777,53 @@ function formatExcelTime(excelVal) {
   }
   return excelVal;
 }
+// ✅ GANTI SELURUH FUNGSI deleteRowByID DENGAN INI
 async function deleteRowByID(context, table, id) {
-  var headerRange = table.getHeaderRowRange().load("values");
   var bodyRange = table.getDataBodyRange().load("values");
+  var headerRange = table.getHeaderRowRange().load("values");
   await context.sync();
-  if (!headerRange.values || headerRange.values.length === 0) return;
+
+  if (!headerRange.values || headerRange.values.length === 0) {
+    return 0;
+  }
+
   var headers = headerRange.values[0];
   var sourceColIdx = -1;
+
   for (var h = 0; h < headers.length; h++) {
     if (String(headers[h]).trim().toLowerCase() === "source") {
       sourceColIdx = h;
       break;
     }
   }
-  if (sourceColIdx === -1) return;
-  var rows = table.rows.load("items");
-  await context.sync();
-  for (var i = rows.items.length - 1; i >= 0; i--) {
-    if (bodyRange.values[i][sourceColIdx] === id) {
-      rows.items[i].delete();
+
+  if (sourceColIdx === -1) {
+    console.log("Kolom Source tidak ditemukan di tabel");
+    return 0;
+  }
+
+  var rowsToDelete = [];
+  for (var i = 0; i < bodyRange.values.length; i++) {
+    var cellValue = String(bodyRange.values[i][sourceColIdx]).trim();
+    var searchId = String(id).trim();
+
+    if (cellValue === searchId) {
+      rowsToDelete.push(i);
+      console.log("Ditemukan data untuk dihapus di baris index: " + i);
     }
   }
+
+  if (rowsToDelete.length === 0) {
+    console.log("Tidak ada data dengan ID: " + id);
+    return 0;
+  }
+
+  for (var i = rowsToDelete.length - 1; i >= 0; i--) {
+    var rowIndex = rowsToDelete[i];
+    console.log("Menghapus baris index: " + rowIndex);
+    table.rows.getItemAt(rowIndex).delete();
+  }
+
   await context.sync();
+  return rowsToDelete.length;
 }

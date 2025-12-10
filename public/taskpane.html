@@ -34,6 +34,7 @@
     </script>
 </head>
 <body>
+
 <div class="container">
         <h2>📊 Laporan Produksi</h2>
 
@@ -342,6 +343,20 @@
             💾 SIMPAN DATA
         </button>
         <div style="height: 50px;"></div>
-    </div>
+		<!-- Modal Konfirmasi Hapus -->
+		<div id="deleteModal" class="modal-overlay">
+			<div class="modal-box">
+				<h3>⚠️ PERINGATAN PENGHAPUSAN</h3>
+				<p>Anda yakin ingin menghapus data dengan ID:</p>
+				<div class="id-display" id="modalIDDisplay"></div>
+				<p style="font-size: 13px; color: #605e5c;">Tindakan ini TIDAK DAPAT dibatalkan!</p>
+				<div class="modal-buttons">
+					<button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">❌ Batal</button>
+					<button class="modal-btn modal-btn-confirm" onclick="confirmDelete()">🗑️ Ya, Hapus</button>
+				</div>
+			</div>
+		</div>
+</div>
+
 </body>
 </html>
