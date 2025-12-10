@@ -65,10 +65,10 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://excel-addin-mu.vercel.app/assets/icon.png" />
-        <bt:Image id="Icon.32x32" DefaultValue="https://excel-addin-mu.vercel.app/assets/icon.png" />
-        <bt:Image id="Icon.64x64" DefaultValue="https://excel-addin-mu.vercel.app/assets/icon.png" />
-        <bt:Image id="Icon.80x80" DefaultValue="https://excel-addin-mu.vercel.app/assets/icon.png" />
+        <bt:Image id="Icon.16x16" DefaultValue="https://excel-addin-mu.vercel.app/assets/logo.png" />
+        <bt:Image id="Icon.32x32" DefaultValue="https://excel-addin-mu.vercel.app/assets/logo.png" />
+        <bt:Image id="Icon.64x64" DefaultValue="https://excel-addin-mu.vercel.app/assets/logo.png" />
+        <bt:Image id="Icon.80x80" DefaultValue="https://excel-addin-mu.vercel.app/assets/logo.png" />
       </bt:Images>
       
       <bt:Urls>
