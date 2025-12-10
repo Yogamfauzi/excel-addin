@@ -1,132 +1,170 @@
 /*
  * File: commands.js
- * Fungsi: Menangani logika tombol Ribbon yang berjalan di background (tanpa UI).
+ * Fungsi: Logika background untuk memindahkan data dari TableLaporanAkhir ke Dash Oscar
+ * Referensi Logic: VBA Sub PanggilDataKeOscar
  */
 
 Office.onReady(() => {
-  // Office siap digunakan
+  // Office siap
 });
 
-/**
- * Fungsi: populateDashboard
- * Deskripsi: Membaca ID dari sheet 'Dash Oscar' (AG1), mencari data di 'Input Shiftly',
- * lalu mengisi sel K2, S1, dan N1 di 'Dash Oscar'.
- */
 async function populateDashboard(event) {
   try {
     await Excel.run(async (context) => {
       
-      // 1. Definisikan Sheet & Tabel
+      // 1. Setup Sheet & Table
       const sheetDash = context.workbook.worksheets.getItemOrNullObject("Dash Oscar");
       const sheetSource = context.workbook.worksheets.getItemOrNullObject("Input Shiftly");
       const tableData = sheetSource.tables.getItemOrNullObject("TableLaporanAkhir");
 
-      // Load properti isNullObject untuk pengecekan
+      // Load properti untuk validasi
       sheetDash.load("isNullObject");
       sheetSource.load("isNullObject");
       tableData.load("isNullObject");
 
       await context.sync();
 
-      // 2. Validasi Ketersediaan Sheet & Tabel
-      if (sheetDash.isNullObject) {
-        console.log("Error: Sheet 'Dash Oscar' tidak ditemukan.");
-        return;
-      }
-      if (sheetSource.isNullObject || tableData.isNullObject) {
-        console.log("Error: Sheet 'Input Shiftly' atau 'TableLaporanAkhir' tidak ditemukan.");
+      if (sheetDash.isNullObject || sheetSource.isNullObject || tableData.isNullObject) {
+        console.log("Error: Sheet 'Dash Oscar', 'Input Shiftly' atau 'TableLaporanAkhir' tidak ditemukan.");
         return;
       }
 
-      // 3. Ambil ID Pencarian dari Cell AG1 di Dashboard
+      // 2. Ambil ID dari Dash Oscar (AG1)
       const searchRange = sheetDash.getRange("AG1");
       searchRange.load("values");
       await context.sync();
 
-      const searchID = searchRange.values[0][0]; // Nilai di AG1
+      const searchID = searchRange.values[0][0];
 
       if (!searchID || searchID.toString().trim() === "") {
-        console.log("Info: Cell AG1 kosong. Harap isi ID terlebih dahulu.");
+        console.log("Info: Cell AG1 kosong.");
         return;
       }
 
-      // 4. Ambil Data Header & Body dari Tabel Sumber
+      // 3. Ambil Data Sumber (Header & Body)
       const headerRange = tableData.getHeaderRowRange().load("values");
       const bodyRange = tableData.getDataBodyRange().load("values");
       await context.sync();
 
-      const headers = headerRange.values[0]; // Array Header (Baris 1)
-      const body = bodyRange.values;         // Array Data (Baris-baris data)
+      const headers = headerRange.values[0];
+      const body = bodyRange.values;
 
-      // 5. Peta Kolom (Mapping Index Kolom berdasarkan Nama Header)
+      // 4. Mapping Index Kolom (Case Insensitive)
+      // Helper untuk mencari index kolom berdasarkan nama
       let colMap = {};
       for (let i = 0; i < headers.length; i++) {
-        // Simpan nama header dalam huruf besar agar tidak sensitif case
         colMap[String(headers[i]).trim().toUpperCase()] = i;
       }
 
-      // Cari Index kolom yang dibutuhkan
+      // --- DEFINISI NAMA KOLOM (SESUAI VBA CONST) ---
       const idxSource = colMap["SOURCE"];
-      const idxLine = colMap["LINE"];
-      const idxLeader = colMap["LEADER"];
       
-      // Coba cari kolom "SHIFT" atau "SHIFT(1)" atau "SHIFT (1)"
-      let idxShift = colMap["SHIFT"];
-      if (idxShift === undefined) idxShift = colMap["SHIFT(1)"];
-      if (idxShift === undefined) idxShift = colMap["SHIFT (1)"];
-
-      // Validasi jika kolom Source (ID) tidak ketemu
+      // Validasi Source
       if (idxSource === undefined) {
-        console.log("Error: Kolom 'Source' tidak ditemukan di tabel sumber.");
+        console.log("Error: Kolom 'Source' tidak ditemukan.");
         return;
       }
 
-      // 6. Loop Pencarian Data (Matching ID)
+      // 5. Cari Baris Data (Looping)
       let foundRow = null;
       for (let i = 0; i < body.length; i++) {
-        // Bandingkan ID (Convert ke string & trim biar aman)
+        // Konversi ke string & trim untuk pencarian yang akurat
         if (String(body[i][idxSource]).trim() === String(searchID).trim()) {
           foundRow = body[i];
-          break; // Stop loop jika ketemu
+          break;
         }
       }
 
-      // 7. Jika Data Ditemukan, Tulis ke Dashboard
+      // Helper function untuk mengambil nilai dari foundRow secara aman
+      function getVal(colName) {
+        const idx = colMap[colName.toUpperCase()];
+        return (idx !== undefined && foundRow[idx] !== null) ? foundRow[idx] : "";
+      }
+
+      // 6. Tulis ke Dashboard jika data ditemukan
       if (foundRow) {
-        // Ambil value (jika index kolom valid)
-        const valLine = (idxLine !== undefined) ? foundRow[idxLine] : "";
-        const valLeader = (idxLeader !== undefined) ? foundRow[idxLeader] : "";
-        const valShift = (idxShift !== undefined) ? foundRow[idxShift] : "";
+        console.log(`Data ditemukan untuk ID: ${searchID}`);
 
-        // Tulis ke sel tujuan
-        sheetDash.getRange("K2").values = [[valLine]];   // Line -> K2
-        sheetDash.getRange("S1").values = [[valLeader]]; // Leader -> S1
-        sheetDash.getRange("N1").values = [[valShift]];  // Shift -> N1
+        // --- BAGIAN I: HEADER DATA ---
+        // Mapping sesuai VBA & Request Anda
+        
+        // K1: Date
+        let valDate = getVal("DATE");
+        // Excel JS mengembalikan tanggal sebagai serial number (int), biarkan Excel formatting yang handle
+        sheetDash.getRange("K1").values = [[valDate]]; 
 
-        // (Opsional) Select cell K2 agar user tahu data berubah
+        sheetDash.getRange("N1").values = [[getVal("SHIFT(1)")]];
+        sheetDash.getRange("E1").values = [[getVal("HARI")]];
+        sheetDash.getRange("S1").values = [[getVal("LEADER")]];
+        sheetDash.getRange("R6").values = [[getVal("TEAM")]];
+        sheetDash.getRange("AB1").values = [[getVal("SPV")]];
+        sheetDash.getRange("K2").values = [[getVal("LINE")]];
+        sheetDash.getRange("N2").values = [[getVal("SKU NAME")]]; // Request: SKU Name
+        sheetDash.getRange("S2").values = [[getVal("TARGET OEE")]];
+        
+        sheetDash.getRange("Q23").values = [[getVal("NO SO")]];
+        sheetDash.getRange("AD91").values = [[getVal("START")]];
+        sheetDash.getRange("AD92").values = [[getVal("FINISH")]];
+        sheetDash.getRange("AA75").values = [[getVal("ISI 1 DUS")]];
+        sheetDash.getRange("F6").values = [[getVal("PLAN")]];
+        sheetDash.getRange("M23").values = [[getVal("TOTAL QUALITY")]];
+        sheetDash.getRange("O23").values = [[getVal("TOTAL SAFETY")]];
+        
+        // Request Tambahan
+        sheetDash.getRange("AA74").values = [[getVal("SPEED / JAM")]]; 
+
+        // --- BAGIAN II: DATA PER JAM (LOOP 1-10) ---
+        // Sesuai VBA: targetRows = Array(10, 11, 12, 13, 15, 16, 17, 19, 20, 21)
+        const targetRows = [10, 11, 12, 13, 15, 16, 17, 19, 20, 21];
+
+        // Kita siapkan array range untuk mempercepat penulisan (batching per kolom)
+        // Namun demi kesederhanaan logika VBA, kita tulis per cell (aman untuk volume data kecil ini)
+        
+        for (let i = 1; i <= 10; i++) {
+            let rowNum = targetRows[i-1]; // Array js mulai dari 0
+            
+            // Kolom B: Hour(i)
+            sheetDash.getRange("B" + rowNum).values = [[getVal(`HOUR(${i})`)]];
+            // Kolom H: Actual(i)
+            sheetDash.getRange("H" + rowNum).values = [[getVal(`ACTUAL(${i})`)]];
+            // Kolom M: Quality(i)
+            sheetDash.getRange("M" + rowNum).values = [[getVal(`QUALITY(${i})`)]];
+            // Kolom O: Safety(i)
+            sheetDash.getRange("O" + rowNum).values = [[getVal(`SAFETY(${i})`)]];
+            // Kolom U: Waste(i)
+            sheetDash.getRange("U" + rowNum).values = [[getVal(`WASTE(${i})`)]];
+            // Kolom D: Standart(i)
+            sheetDash.getRange("D" + rowNum).values = [[getVal(`STANDART(${i})`)]];
+        }
+
+        // --- BAGIAN III: WASTE TAMBAHAN (11-15) ---
+        // Sesuai VBA
+        sheetDash.getRange("X10").values = [[getVal("WASTE(11)")]];
+        sheetDash.getRange("X13").values = [[getVal("WASTE(12)")]];
+        sheetDash.getRange("X15").values = [[getVal("WASTE(13)")]];
+        sheetDash.getRange("X17").values = [[getVal("WASTE(14)")]];
+        sheetDash.getRange("X19").values = [[getVal("WASTE(15)")]];
+
+        // Selesai, arahkan kursor ke K2
         sheetDash.getRange("K2").select();
-
-        console.log(`Sukses: Data ID ${searchID} berhasil dimuat.`);
+        
       } else {
-        console.log(`Info: ID ${searchID} tidak ditemukan di database.`);
-        // (Opsional) Kosongkan field jika tidak ketemu
-        sheetDash.getRange("K2").values = [[""]];
-        sheetDash.getRange("S1").values = [[""]];
-        sheetDash.getRange("N1").values = [[""]];
+        console.log("ID tidak ditemukan.");
+        // Kosongkan field utama saja sebagai indikator
+        const blank = [[""]];
+        sheetDash.getRange("K2").values = blank; // Line
+        sheetDash.getRange("N2").values = blank; // SKU
+        sheetDash.getRange("F6").values = blank; // Plan
+        // Anda bisa menambahkan logika pengosongan cell lain jika diperlukan
       }
 
       await context.sync();
     });
   } catch (error) {
-    console.error("Error di populateDashboard: " + error);
+    console.error("Error populateDashboard: " + error);
   } finally {
-    // Wajib dipanggil untuk memberitahu Excel bahwa proses selesai
-    if (event) {
-      event.completed();
-    }
+    if (event) event.completed();
   }
 }
 
-// Mendaftarkan fungsi ke Office.actions agar bisa dipanggil dari Manifest XML
-// Nama string pertama ("populateDashboard") harus SAMA PERSIS dengan <FunctionName> di XML
 Office.actions.associate("populateDashboard", populateDashboard);
