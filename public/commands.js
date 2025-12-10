@@ -1,7 +1,6 @@
 /*
  * File: commands.js
- * Fungsi: Logika background final untuk Dashboard Oscar
- * Update: Fix mapping DetailDowntimeTable (Matrix)
+ * Fungsi: Logika background lengkap (Main, Matrix, Detail List, Reject)
  */
 
 Office.onReady(() => {});
@@ -15,20 +14,19 @@ async function populateDashboard(event) {
       const sheetShiftly = context.workbook.worksheets.getItemOrNullObject("Input Shiftly");
       const sheetDowntime = context.workbook.worksheets.getItemOrNullObject("Input Downtime");
 
-      // Tabel Utama
       const tblMain = sheetShiftly.tables.getItemOrNullObject("TableLaporanAkhir");
-      
-      // Tabel Matrix (Mesin 1-13) -> DetailDowntimeTable
       const tblMatrix = sheetDowntime.tables.getItemOrNullObject("DetailDowntimeTable");
-      
-      // Tabel List (Rincian Kejadian) -> DowntimeTable
       const tblDetailList = sheetDowntime.tables.getItemOrNullObject("DowntimeTable");
+      
+      // Tabel Reject (BARU)
+      const tblReject = sheetDowntime.tables.getItemOrNullObject("IsiRejectTable");
 
       // Load properti
       sheetDash.load("isNullObject");
       tblMain.load("isNullObject");
       tblMatrix.load("isNullObject");
       tblDetailList.load("isNullObject");
+      tblReject.load("isNullObject");
 
       await context.sync();
 
@@ -43,7 +41,6 @@ async function populateDashboard(event) {
       searchRange.load("values");
       await context.sync();
 
-      // Pastikan ID bersih dari spasi
       const searchID = String(searchRange.values[0][0]).trim();
 
       if (!searchID) {
@@ -70,23 +67,27 @@ async function populateDashboard(event) {
         rangeDetailBody = tblDetailList.getDataBodyRange().load("values");
       }
 
+      // Load Reject Table (BARU)
+      let rangeRejectHead = null, rangeRejectBody = null;
+      if (!tblReject.isNullObject) {
+        rangeRejectHead = tblReject.getHeaderRowRange().load("values");
+        rangeRejectBody = tblReject.getDataBodyRange().load("values");
+      }
+
       await context.sync();
 
       // --- 4. HELPER FUNCTIONS ---
-      // Membuat Map: "NamaKolom" -> Index (0, 1, 2...)
       function createColMap(headers) {
         let map = {};
         for (let i = 0; i < headers.length; i++) {
-          // Simpan dengan Huruf Besar & Trim agar aman
           map[String(headers[i]).trim().toUpperCase()] = i;
         }
         return map;
       }
       
-      // Ambil Nilai dari Baris berdasarkan Nama Kolom
       function getVal(row, map, colName) {
-        const idx = map[colName.toUpperCase()]; // Cari pakai Huruf Besar
-        if (idx === undefined) return ""; // Jika kolom tidak ada, return kosong
+        const idx = map[colName.toUpperCase()];
+        if (idx === undefined) return "";
         return (row[idx] !== null) ? row[idx] : "";
       }
 
@@ -96,7 +97,6 @@ async function populateDashboard(event) {
       const mapMain = createColMap(headersMain);
       const idxSourceMain = mapMain["SOURCE"];
 
-      // Cari Baris ID
       let rowMain = null;
       for (let i = 0; i < bodyMain.length; i++) {
         if (String(bodyMain[i][idxSourceMain]).trim() === searchID) {
@@ -167,7 +167,6 @@ async function populateDashboard(event) {
         const mapMatrix = createColMap(headersMatrix);
         const idxSourceMatrix = mapMatrix["SOURCE"];
 
-        // Cari Baris ID di Tabel Matrix
         let rowMatrix = null;
         for (let i = 0; i < bodyMatrix.length; i++) {
           if (String(bodyMatrix[i][idxSourceMatrix]).trim() === searchID) {
@@ -177,33 +176,28 @@ async function populateDashboard(event) {
         }
 
         if (rowMatrix) {
-          // --- MAPPING BARIS TUJUAN (Hardcoded sesuai Request) ---
           const grp1Rows = [7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
           const grp2Rows = [30, 31, 33, 35, 37, 39, 40, 41, 43, 45, 46, 47, 48];
           const grp3Rows = [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67];
 
-          // Loop 13 Mesin (Machine1 s/d Machine13)
           for (let m = 1; m <= 13; m++) {
-            let idx = m - 1; // Array index mulai 0
+            let idx = m - 1;
             
-            // GROUP 1: Unscheduled Loss -> Ke Kolom Z, AA, AB, AC
-            // Mengambil kolom: MACHINE1, UTND1, CIMOH1, NPT1 (Otomatis Uppercase di fungsi getVal)
+            // GROUP 1
             let r1 = grp1Rows[idx];
             sheetDash.getRange("Z" + r1).values  = [[getVal(rowMatrix, mapMatrix, "MACHINE" + m)]];
             sheetDash.getRange("AA" + r1).values = [[getVal(rowMatrix, mapMatrix, "UTND" + m)]];
             sheetDash.getRange("AB" + r1).values = [[getVal(rowMatrix, mapMatrix, "CIMOH" + m)]];
             sheetDash.getRange("AC" + r1).values = [[getVal(rowMatrix, mapMatrix, "NPT" + m)]];
 
-            // GROUP 2: Planned Downtime -> Ke Kolom AA, AB, AC, AD
-            // Mengambil kolom: PM1, PS1, PCO1, BM1
+            // GROUP 2
             let r2 = grp2Rows[idx];
             sheetDash.getRange("AA" + r2).values = [[getVal(rowMatrix, mapMatrix, "PM" + m)]];
             sheetDash.getRange("AB" + r2).values = [[getVal(rowMatrix, mapMatrix, "PS" + m)]];
             sheetDash.getRange("AC" + r2).values = [[getVal(rowMatrix, mapMatrix, "PCO" + m)]];
             sheetDash.getRange("AD" + r2).values = [[getVal(rowMatrix, mapMatrix, "BM" + m)]];
 
-            // GROUP 3: Unplanned Downtime -> Ke Kolom AA, AB, AC, AD, AE
-            // Mengambil kolom: OLPS1, EQFB1, LOG1, PRL1, QUAL1
+            // GROUP 3
             let r3 = grp3Rows[idx];
             sheetDash.getRange("AA" + r3).values = [[getVal(rowMatrix, mapMatrix, "OLPS" + m)]];
             sheetDash.getRange("AB" + r3).values = [[getVal(rowMatrix, mapMatrix, "EQFB" + m)]];
@@ -215,7 +209,7 @@ async function populateDashboard(event) {
       }
 
       // =========================================================
-      // BAGIAN III: DETAIL DOWNTIME (DowntimeTable List)
+      // BAGIAN III: DETAIL DOWNTIME LIST (DowntimeTable)
       // =========================================================
       if (!tblDetailList.isNullObject && rangeDetailBody) {
         const headersDetail = rangeDetailHead.values[0];
@@ -223,10 +217,8 @@ async function populateDashboard(event) {
         const mapDetail = createColMap(headersDetail);
         const idxSourceDetail = mapDetail["SOURCE"];
 
-        // Filter baris yang ID-nya cocok
         const matchingRows = bodyDetail.filter(r => String(r[idxSourceDetail]).trim() === searchID);
 
-        // Siapkan 10 "Keranjang" (Buckets) untuk Jam 1-10
         let buckets = [];
         for(let i=0; i<10; i++) buckets.push({ F: [], P: [], U: [], W: [] });
 
@@ -234,22 +226,19 @@ async function populateDashboard(event) {
           let startVal = getVal(row, mapDetail, "START");
           let timeDec = 0;
 
-          // Normalisasi Time (Excel Serial -> Decimal)
           if (typeof startVal === 'number') {
              timeDec = (startVal - Math.floor(startVal)) * 24;
           }
 
-          // Cek Jam Kejadian masuk ke Keranjang mana (1-10)
           let foundBucketIdx = -1;
           for (let i = 0; i < 10; i++) {
-            let range = hourRanges[i]; // Dari tabel utama
+            let range = hourRanges[i];
             if (range && timeDec >= range.start && timeDec < range.end) {
               foundBucketIdx = i;
               break;
             }
           }
 
-          // Jika ketemu jamnya, masukkan datanya ke keranjang
           if (foundBucketIdx > -1) {
             let b = buckets[foundBucketIdx];
             let mach = getVal(row, mapDetail, "MACHINE");
@@ -259,32 +248,68 @@ async function populateDashboard(event) {
             let pic = getVal(row, mapDetail, "PIC");
             let stat = getVal(row, mapDetail, "STATUS");
 
-            // Format String: "Mesin: Masalah (Durasi)"
             b.F.push(`${mach}: ${desc} (${dur})`);
-            
             if (act && act !== "NONE") b.P.push(act);
             if (pic && pic !== "NONE") b.U.push(pic);
             if (stat && stat !== "NONE") b.W.push(stat);
           }
         });
 
-        // Tulis ke Dashboard (Baris 59, 62, 65...)
         const dtTargetRows = [59, 62, 65, 67, 69, 71, 73, 75, 77, 79];
         
         for(let i=0; i<10; i++) {
           let r = dtTargetRows[i];
           let b = buckets[i];
 
-          // Gabungkan data jika ada lebih dari 1 kejadian di jam yang sama
           let valF = b.F.length > 0 ? b.F.join(", ") : "NONE";
           let valP = b.P.length > 0 ? b.P.join(", ") : "NONE";
-          let valU = b.U.length > 0 ? [...new Set(b.U)].join(" & ") : "NONE"; // Hapus duplikat nama
-          let valW = b.W.length > 0 ? [...new Set(b.W)].join(" & ") : "NONE"; 
+          let valU = b.U.length > 0 ? [...new Set(b.U)].join(" & ") : "NONE";
+          let valW = b.W.length > 0 ? [...new Set(b.W)].join(" & ") : "NONE";
 
           sheetDash.getRange("F" + r).values = [[valF]];
           sheetDash.getRange("P" + r).values = [[valP]];
           sheetDash.getRange("U" + r).values = [[valU]];
           sheetDash.getRange("W" + r).values = [[valW]];
+        }
+      }
+
+      // =========================================================
+      // BAGIAN IV: DATA REJECT (IsiRejectTable) - FITUR BARU
+      // =========================================================
+      if (!tblReject.isNullObject && rangeRejectBody) {
+        
+        const headersReject = rangeRejectHead.values[0];
+        const bodyReject = rangeRejectBody.values;
+        const mapReject = createColMap(headersReject);
+        const idxSourceReject = mapReject["SOURCE"];
+
+        // Cari Baris ID
+        let rowReject = null;
+        for (let i = 0; i < bodyReject.length; i++) {
+          if (String(bodyReject[i][idxSourceReject]).trim() === searchID) {
+            rowReject = bodyReject[i];
+            break;
+          }
+        }
+
+        if (rowReject) {
+          // Mapping Kolom Dashboard (1 s/d 12)
+          const targetCols = ["E", "H", "K", "L", "N", "Q", "R", "S", "T", "W", "AB", "AD"];
+
+          for (let i = 0; i < 12; i++) {
+            let rNum = i + 1; // 1 s/d 12
+            let colName = targetCols[i];
+
+            // Ambil Data
+            let nameVal = getVal(rowReject, mapReject, "REJECT" + rNum);
+            let isiVal = getVal(rowReject, mapReject, "ISI" + rNum);
+
+            // Tulis Nama Reject (Baris 113)
+            sheetDash.getRange(colName + "113").values = [[nameVal]];
+            
+            // Tulis Jumlah Isi (Baris 114)
+            sheetDash.getRange(colName + "114").values = [[isiVal]];
+          }
         }
       }
 
@@ -304,7 +329,6 @@ async function populateDashboard(event) {
   }
 }
 
-// Helper: Parse Range Jam ("07.00 - 08.00") jadi angka desimal
 function parseTimeRange(rangeStr) {
   if (!rangeStr || typeof rangeStr !== 'string' || rangeStr.indexOf("-") === -1) {
     return null;
