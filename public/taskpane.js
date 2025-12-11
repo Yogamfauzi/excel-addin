@@ -350,6 +350,9 @@ function setupEventListeners() {
     if (actEl) actEl.addEventListener("input", hitungDowntimePerJam);
     if (stdEl) stdEl.addEventListener("input", hitungDowntimePerJam);
   }
+
+  // --- BAGIAN 1: Panggil fungsi navigasi di awal ---
+  setupKeyboardNavigation();
 }
 
 function updateStandartFromSpeed() {
@@ -885,6 +888,9 @@ function addDowntimeRow(data) {
     setValue("Status" + idx, data.Status || "");
     setValue("JamStart" + idx, data.JamStart || "");
   }
+
+  // --- BAGIAN 3: Panggil fungsi navigasi setiap kali tambah row ---
+  setupKeyboardNavigation();
 }
 function removeDowntimeRow(idx) {
   var row = document.getElementById("DowntimeRow_" + idx);
@@ -1812,4 +1818,148 @@ async function deleteRowByID(context, table, id) {
 
   await context.sync();
   return rowsToDelete.length;
+}
+
+// --- BAGIAN 2: Definisi Fungsi Navigasi Keyboard (VERTIKAL & DOM - FIXED) ---
+
+function setupKeyboardNavigation() {
+  // Ambil semua input
+  var inputs = document.querySelectorAll("input:not([type='hidden']), select, textarea");
+  inputs.forEach(function (input) {
+    // Reset listener biar tidak dobel
+    input.removeEventListener("keydown", handleKeyNavigation);
+    input.addEventListener("keydown", handleKeyNavigation);
+  });
+}
+
+function handleKeyNavigation(e) {
+  var target = e.target;
+
+  if (e.key === "Enter" || e.key === "ArrowDown") {
+    // 1. Coba gerak vertikal dulu (berdasarkan nomor ID)
+    var success = attemptVerticalNavigation(target, 1);
+
+    // 2. Jika gagal (karena bukan field angka urut), lakukan gerak standar (pindah kolom selanjutnya)
+    if (!success) {
+      focusNextInput(target);
+    }
+    e.preventDefault(); // Mencegah enter submit form atau panah scroll layar
+
+  } else if (e.key === "ArrowUp") {
+    // 1. Coba gerak vertikal naik
+    var success = attemptVerticalNavigation(target, -1);
+
+    // 2. Jika gagal, pindah ke kolom sebelumnya
+    if (!success) {
+      focusPreviousInput(target);
+    }
+    e.preventDefault();
+  }
+}
+
+// Fungsi: Mencari ID dengan angka urut (misal Actual1 -> Actual2)
+function attemptVerticalNavigation(currentElement, direction) {
+  if (!currentElement.id) return false;
+
+  // Regex: Ambil kata depan dan angkanya (Contoh: "Actual" dan "1")
+  var match = currentElement.id.match(/^([a-zA-Z_]+)(\d+)$/);
+
+  if (match) {
+    var prefix = match[1];
+    var currentNum = parseInt(match[2]);
+    var nextNum = currentNum + direction;
+
+    // Cegah angka jadi 0 atau minus
+    if (nextNum < 1) return false;
+
+    var nextId = prefix + nextNum;
+    var nextEl = document.getElementById(nextId);
+
+    if (nextEl) {
+      // TRIK: Pakai kurung siku ['focus']() biar editor tidak error
+      if (typeof nextEl['focus'] === 'function') {
+        nextEl['focus']();
+      }
+
+      // Auto blok teks biar gampang edit
+      if (nextEl.tagName === "INPUT" || nextEl.tagName === "TEXTAREA") {
+        setTimeout(function () {
+          if (typeof nextEl['select'] === 'function') {
+            nextEl['select']();
+          }
+        }, 10);
+      }
+      return true; // Berhasil pindah vertikal
+    }
+  }
+  return false; // Gagal (bukan field berurut)
+}
+
+function focusNextInput(currentElement) {
+  // Ambil semua elemen input
+  var allNodeList = document.querySelectorAll("input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])");
+  var allInputs = [];
+
+  // Konversi NodeList ke Array manual biar aman
+  for (var i = 0; i < allNodeList.length; i++) {
+    allInputs.push(allNodeList[i]);
+  }
+
+  // Filter elemen yang visible (punya lebar/tinggi di layar)
+  allInputs = allInputs.filter(function (el) {
+    return el.getBoundingClientRect().width > 0 || el.getBoundingClientRect().height > 0;
+  });
+
+  var currentIndex = allInputs.indexOf(currentElement);
+  var nextIndex = currentIndex + 1;
+
+  if (nextIndex < allInputs.length) {
+    var nextEl = allInputs[nextIndex];
+
+    // TRIK: Pakai kurung siku
+    if (typeof nextEl['focus'] === 'function') {
+      nextEl['focus']();
+    }
+
+    if (nextEl.tagName === "INPUT" || nextEl.tagName === "TEXTAREA") {
+      setTimeout(function () {
+        if (typeof nextEl['select'] === 'function') {
+          nextEl['select']();
+        }
+      }, 10);
+    }
+  }
+}
+
+function focusPreviousInput(currentElement) {
+  var allNodeList = document.querySelectorAll("input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])");
+  var allInputs = [];
+
+  for (var i = 0; i < allNodeList.length; i++) {
+    allInputs.push(allNodeList[i]);
+  }
+
+  allInputs = allInputs.filter(function (el) {
+    return el.getBoundingClientRect().width > 0 || el.getBoundingClientRect().height > 0;
+  });
+
+  var currentIndex = allInputs.indexOf(currentElement);
+  var prevIndex = currentIndex - 1;
+
+  if (prevIndex >= 0) {
+    var prevEl = allInputs[prevIndex];
+
+    // TRIK: Pakai kurung siku
+    if (typeof prevEl['focus'] === 'function') {
+      prevEl['focus']();
+    }
+
+    if (prevEl.tagName === "INPUT" || prevEl.tagName === "TEXTAREA") {
+      setTimeout(function () {
+        if (typeof prevEl['select'] === 'function') {
+          prevEl['select']();
+        }
+      }, 10);
+    }
+  }
 }
