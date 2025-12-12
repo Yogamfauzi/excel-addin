@@ -23,6 +23,7 @@ Office.onReady(function (info) {
     loadMasterData().then(function () {
       initializeForm();
       makeAllFieldsEditable();
+      setupTimeInputAutoFormat();
     });
   }
 });
@@ -351,7 +352,6 @@ function setupEventListeners() {
     if (stdEl) stdEl.addEventListener("input", hitungDowntimePerJam);
   }
 
-  // --- BAGIAN 1: Panggil fungsi navigasi di awal ---
   setupKeyboardNavigation();
 }
 
@@ -886,10 +886,10 @@ function addDowntimeRow(data) {
     setValue("Action" + idx, data.Action || "");
     setValue("Pic" + idx, data.Pic || "");
     setValue("Status" + idx, data.Status || "");
-    setValue("JamStart" + idx, data.JamStart || "");
+    setValue("JamStart" + idx, normalizeTimeInput(data.JamStart || ""));
   }
 
-  // --- BAGIAN 3: Panggil fungsi navigasi setiap kali tambah row ---
+  setupDynamicTimeInputs();
   setupKeyboardNavigation();
 }
 function removeDowntimeRow(idx) {
@@ -1820,13 +1820,9 @@ async function deleteRowByID(context, table, id) {
   return rowsToDelete.length;
 }
 
-// --- BAGIAN 2: Definisi Fungsi Navigasi Keyboard (VERTIKAL & DOM - FIXED) ---
-
 function setupKeyboardNavigation() {
-  // Ambil semua input
   var inputs = document.querySelectorAll("input:not([type='hidden']), select, textarea");
   inputs.forEach(function (input) {
-    // Reset listener biar tidak dobel
     input.removeEventListener("keydown", handleKeyNavigation);
     input.addEventListener("keydown", handleKeyNavigation);
   });
@@ -1836,20 +1832,16 @@ function handleKeyNavigation(e) {
   var target = e.target;
 
   if (e.key === "Enter" || e.key === "ArrowDown") {
-    // 1. Coba gerak vertikal dulu (berdasarkan nomor ID)
     var success = attemptVerticalNavigation(target, 1);
 
-    // 2. Jika gagal (karena bukan field angka urut), lakukan gerak standar (pindah kolom selanjutnya)
     if (!success) {
       focusNextInput(target);
     }
-    e.preventDefault(); // Mencegah enter submit form atau panah scroll layar
+    e.preventDefault();
 
   } else if (e.key === "ArrowUp") {
-    // 1. Coba gerak vertikal naik
     var success = attemptVerticalNavigation(target, -1);
 
-    // 2. Jika gagal, pindah ke kolom sebelumnya
     if (!success) {
       focusPreviousInput(target);
     }
@@ -1857,11 +1849,9 @@ function handleKeyNavigation(e) {
   }
 }
 
-// Fungsi: Mencari ID dengan angka urut (misal Actual1 -> Actual2)
 function attemptVerticalNavigation(currentElement, direction) {
   if (!currentElement.id) return false;
 
-  // Regex: Ambil kata depan dan angkanya (Contoh: "Actual" dan "1")
   var match = currentElement.id.match(/^([a-zA-Z_]+)(\d+)$/);
 
   if (match) {
@@ -1869,19 +1859,16 @@ function attemptVerticalNavigation(currentElement, direction) {
     var currentNum = parseInt(match[2]);
     var nextNum = currentNum + direction;
 
-    // Cegah angka jadi 0 atau minus
     if (nextNum < 1) return false;
 
     var nextId = prefix + nextNum;
     var nextEl = document.getElementById(nextId);
 
     if (nextEl) {
-      // TRIK: Pakai kurung siku ['focus']() biar editor tidak error
       if (typeof nextEl['focus'] === 'function') {
         nextEl['focus']();
       }
 
-      // Auto blok teks biar gampang edit
       if (nextEl.tagName === "INPUT" || nextEl.tagName === "TEXTAREA") {
         setTimeout(function () {
           if (typeof nextEl['select'] === 'function') {
@@ -1889,23 +1876,20 @@ function attemptVerticalNavigation(currentElement, direction) {
           }
         }, 10);
       }
-      return true; // Berhasil pindah vertikal
+      return true;
     }
   }
-  return false; // Gagal (bukan field berurut)
+  return false;
 }
 
 function focusNextInput(currentElement) {
-  // Ambil semua elemen input
   var allNodeList = document.querySelectorAll("input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])");
   var allInputs = [];
 
-  // Konversi NodeList ke Array manual biar aman
   for (var i = 0; i < allNodeList.length; i++) {
     allInputs.push(allNodeList[i]);
   }
 
-  // Filter elemen yang visible (punya lebar/tinggi di layar)
   allInputs = allInputs.filter(function (el) {
     return el.getBoundingClientRect().width > 0 || el.getBoundingClientRect().height > 0;
   });
@@ -1916,7 +1900,6 @@ function focusNextInput(currentElement) {
   if (nextIndex < allInputs.length) {
     var nextEl = allInputs[nextIndex];
 
-    // TRIK: Pakai kurung siku
     if (typeof nextEl['focus'] === 'function') {
       nextEl['focus']();
     }
@@ -1949,7 +1932,6 @@ function focusPreviousInput(currentElement) {
   if (prevIndex >= 0) {
     var prevEl = allInputs[prevIndex];
 
-    // TRIK: Pakai kurung siku
     if (typeof prevEl['focus'] === 'function') {
       prevEl['focus']();
     }
@@ -1962,4 +1944,198 @@ function focusPreviousInput(currentElement) {
       }, 10);
     }
   }
+}
+
+function setupTimeInputAutoFormat() {
+  var timeInputIds = [
+    'StartProduction',
+    'EndProduction'
+  ];
+
+  timeInputIds.forEach(function (id) {
+    var el = document.getElementById(id);
+
+    if (el) {
+      // GUNAKAN KURUNG SIKU AGAR TIDAK ERROR DI EDITOR
+      el['type'] = 'text';
+      el['maxLength'] = 5;
+      el['placeholder'] = 'HH:MM';
+      el.setAttribute('data-time-input', 'true');
+
+      el.addEventListener('input', handleTimeInput);
+      el.addEventListener('keydown', handleTimeKeydown);
+      el.addEventListener('blur', handleTimeBlur);
+      el.addEventListener('paste', handleTimePaste);
+    }
+  });
+
+  setupDynamicTimeInputs();
+}
+
+function setupDynamicTimeInputs() {
+  for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
+    var el = document.getElementById('JamStart' + i);
+
+    if (el && !el.getAttribute('data-time-input')) {
+      // GUNAKAN KURUNG SIKU AGAR TIDAK ERROR DI EDITOR
+      el['type'] = 'text';
+      el['maxLength'] = 5;
+      el['placeholder'] = 'HH:MM';
+      el.setAttribute('data-time-input', 'true');
+
+      el.addEventListener('input', handleTimeInput);
+      el.addEventListener('keydown', handleTimeKeydown);
+      el.addEventListener('blur', handleTimeBlur);
+      el.addEventListener('paste', handleTimePaste);
+    }
+  }
+}
+
+function handleTimeInput(e) {
+  var input = e.target;
+  var value = input.value;
+
+  var numbers = value.replace(/\D/g, '');
+
+  if (numbers.length > 4) {
+    numbers = numbers.substring(0, 4);
+  }
+
+  var formatted = '';
+
+  if (numbers.length > 0) {
+    var hours = numbers.substring(0, 2);
+
+    if (parseInt(hours) > 23) {
+      hours = '23';
+    }
+
+    formatted = hours;
+
+    if (numbers.length > 2) {
+      var minutes = numbers.substring(2, 4);
+
+      if (parseInt(minutes) > 59) {
+        minutes = '59';
+      }
+
+      formatted += ':' + minutes;
+    }
+  }
+
+  input.value = formatted;
+
+  if (formatted.length === 5) {
+    var event = new Event('change', { bubbles: true });
+    input.dispatchEvent(event);
+  }
+}
+
+function handleTimeKeydown(e) {
+  var input = e.target;
+  var key = e.key;
+
+  if ([
+    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+  ].indexOf(key) !== -1) {
+    return;
+  }
+
+  if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].indexOf(key.toLowerCase()) !== -1) {
+    return;
+  }
+
+  if (key < '0' || key > '9') {
+    e.preventDefault();
+    return;
+  }
+
+  var value = input.value.replace(/\D/g, '');
+  if (value.length >= 4) {
+    e.preventDefault();
+  }
+}
+
+function handleTimeBlur(e) {
+  var input = e.target;
+  var value = input.value;
+
+  if (!value) return;
+
+  var numbers = value.replace(/\D/g, '');
+
+  if (numbers.length === 1) {
+    numbers = '0' + numbers + '00';
+  } else if (numbers.length === 2) {
+    numbers = numbers + '00';
+  } else if (numbers.length === 3) {
+    numbers = '0' + numbers;
+  }
+
+  if (numbers.length >= 4) {
+    var hours = numbers.substring(0, 2);
+    var minutes = numbers.substring(2, 4);
+
+    if (parseInt(hours) > 23) hours = '23';
+    if (parseInt(minutes) > 59) minutes = '59';
+
+    input.value = hours + ':' + minutes;
+
+    var event = new Event('change', { bubbles: true });
+    input.dispatchEvent(event);
+  }
+}
+
+function handleTimePaste(e) {
+  e.preventDefault();
+
+  var input = e.target;
+
+  // GUNAKAN KURUNG SIKU UNTUK CLIPBOARD DATA JUGA
+  var clipboardData = (e['clipboardData'] || window['clipboardData']);
+  var pastedText = clipboardData ? clipboardData.getData('text') : '';
+
+  var numbers = pastedText.replace(/\D/g, '');
+
+  if (numbers.length >= 3) {
+    var hours = numbers.substring(0, 2);
+    var minutes = numbers.substring(2, 4);
+
+    if (parseInt(hours) > 23) hours = '23';
+    if (parseInt(minutes) > 59) minutes = '59';
+
+    input['value'] = hours + ':' + minutes;
+
+    var event = new Event('change', { bubbles: true });
+    input.dispatchEvent(event);
+  } else {
+    input['value'] = numbers;
+  }
+}
+
+function isValidTimeFormat(timeStr) {
+  if (!timeStr) return false;
+
+  var pattern = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
+  return pattern.test(timeStr);
+}
+
+function normalizeTimeInput(input) {
+  if (!input) return '';
+
+  var numbers = String(input).replace(/\D/g, '');
+
+  if (numbers.length === 0) return '';
+  if (numbers.length === 1) numbers = '0' + numbers + '00';
+  if (numbers.length === 2) numbers = numbers + '00';
+  if (numbers.length === 3) numbers = '0' + numbers;
+
+  var hours = numbers.substring(0, 2);
+  var minutes = numbers.substring(2, 4);
+
+  if (parseInt(hours) > 23) hours = '23';
+  if (parseInt(minutes) > 59) minutes = '59';
+
+  return hours + ':' + minutes;
 }

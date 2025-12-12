@@ -33,326 +33,334 @@
 </head>
 <body>
 
+
 <div class="container">
-        <h2>📊 Laporan Produksi</h2>
+    <h2>📊 Laporan Produksi</h2>
 
-        <div class="group-box">
-            <h4>🔍 Edit / Hapus Data</h4>
-            <label>Cari ID Transaksi:</label>
-            <input id="KolomEdit" type="text" placeholder="Contoh: 081224-JOHN-123">
+    <div class="group-box">
+        <h4>🔍 Edit / Hapus Data</h4>
+        <label>Cari ID Source:</label>
+        <input id="KolomEdit" type="text" placeholder="Contoh: 081224-JOHN-123">
+        <div class="grid-2">
+            <button id="EditBtn" type="button" class="btn-primary">✏️ Edit Data</button>
+            <button id="HapusBtn" type="button" class="btn-danger">🗑️ Hapus Data</button>
+        </div>
+    </div>
 
-            <div class="grid-2">
-                <button id="EditBtn" type="button" class="btn-primary">✏️ Edit Data</button>
-                <button id="HapusBtn" type="button" class="btn-danger">🗑️ Hapus Data</button>
+    <hr>
+
+    <div class="group-box">
+        <h4>ℹ️ Informasi Umum</h4>
+        <div class="grid-2">
+            <div><label>Hari:</label><input id="Hari" type="text" readonly></div>
+            <div><label>Tanggal:</label><input id="Tanggal" type="date"></div>
+            <div>
+                <label>Shift:</label>
+                <select id="Shift"><option value="">--Loading--</option></select>
+            </div>
+            <div>
+                <label>Line:</label>
+                <select id="Line">
+                    <option value="">--Pilih Line--</option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                    <option value="G">G</option>
+                </select>
+            </div>
+            <div><label>Leader:</label><select id="Leader"><option value="">--Pilih Leader--</option></select></div>
+            <div><label>Team:</label><select id="Team"><option value="">--Pilih Team--</option></select></div>
+            <div><label>Supervisor:</label><select id="Supervisor"><option value="">--Pilih Supervisor--</option></select></div>
+            <div><label>Target OEE (%):</label><input id="TargetOEE" type="text" readonly></div>
+            <div><label>SKU Code:</label><input id="SKUCode" type="text" placeholder="Scan/Ketik"></div>
+            <div><label>SKU Name:</label><input id="SKUName" type="text" readonly></div>
+            <div><label>Tanggal Masak:</label><input id="TanggalMasak" type="text" placeholder="Contoh: 10-12-2025"></div>
+            <div><label>No Tangki:</label><input id="NoTangki" type="text"></div>
+            <div><label>EXP Code:</label><input id="EXPCode" type="text"></div>
+            <div><label>No SO:</label><input id="NoSO" type="text"></div>
+        </div>
+    </div>
+
+    <div class="group-box">
+        <h4>🏭 Data Produksi</h4>
+        <div class="grid-3">
+            <div>
+                <label>Start Production:</label>
+                <input id="StartProduction" type="text" placeholder="HH:MM" maxlength="5">
+            </div>
+            <div>
+                <label>End Production:</label>
+                <input id="EndProduction" type="text" placeholder="HH:MM" maxlength="5">
+            </div>
+            <div><label>Total Jam:</label><input id="TotalJam" type="text" readonly></div>
+            <div><label>Planning:</label><input id="Planning" type="number" min="0"></div>
+            <div><label>Speed/Jam:</label><input id="SpeedJam" type="number" min="0"></div>
+            <div><label>Isi 1 Dus:</label><input id="Isi1Dus" type="number" min="0"></div>
+            <div><label>Total Pcs:</label><input id="TotalPcs" type="text" readonly></div>
+        </div>
+    </div>
+
+    <div class="group-box">
+        <h4>⏱️ Data Per Jam (Input)</h4>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:100px;">Jam</th>
+                        <th>Standart</th>
+                        <th>Actual</th>
+                        <th>Quality</th>
+                        <th>Safety</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><input id="Hour1" type="text" class="small-input" readonly></td><td><input id="Standart1" type="text" class="small-input"></td><td><input id="Actual1" type="text" class="small-input"></td><td><input id="Quality1" type="text" class="small-input"></td><td><input id="Safety1" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour2" type="text" class="small-input" readonly></td><td><input id="Standart2" type="text" class="small-input"></td><td><input id="Actual2" type="text" class="small-input"></td><td><input id="Quality2" type="text" class="small-input"></td><td><input id="Safety2" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour3" type="text" class="small-input" readonly></td><td><input id="Standart3" type="text" class="small-input"></td><td><input id="Actual3" type="text" class="small-input"></td><td><input id="Quality3" type="text" class="small-input"></td><td><input id="Safety3" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour4" type="text" class="small-input" readonly></td><td><input id="Standart4" type="text" class="small-input"></td><td><input id="Actual4" type="text" class="small-input"></td><td><input id="Quality4" type="text" class="small-input"></td><td><input id="Safety4" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour5" type="text" class="small-input" readonly></td><td><input id="Standart5" type="text" class="small-input"></td><td><input id="Actual5" type="text" class="small-input"></td><td><input id="Quality5" type="text" class="small-input"></td><td><input id="Safety5" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour6" type="text" class="small-input" readonly></td><td><input id="Standart6" type="text" class="small-input"></td><td><input id="Actual6" type="text" class="small-input"></td><td><input id="Quality6" type="text" class="small-input"></td><td><input id="Safety6" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour7" type="text" class="small-input" readonly></td><td><input id="Standart7" type="text" class="small-input"></td><td><input id="Actual7" type="text" class="small-input"></td><td><input id="Quality7" type="text" class="small-input"></td><td><input id="Safety7" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour8" type="text" class="small-input" readonly></td><td><input id="Standart8" type="text" class="small-input"></td><td><input id="Actual8" type="text" class="small-input"></td><td><input id="Quality8" type="text" class="small-input"></td><td><input id="Safety8" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour9" type="text" class="small-input" readonly></td><td><input id="Standart9" type="text" class="small-input"></td><td><input id="Actual9" type="text" class="small-input"></td><td><input id="Quality9" type="text" class="small-input"></td><td><input id="Safety9" type="text" class="small-input"></td></tr>
+                    <tr><td><input id="Hour10" type="text" class="small-input" readonly></td><td><input id="Standart10" type="text" class="small-input"></td><td><input id="Actual10" type="text" class="small-input"></td><td><input id="Quality10" type="text" class="small-input"></td><td><input id="Safety10" type="text" class="small-input"></td></tr>
+                    
+                    <tr class="total-row">
+                        <td class="label-cell">TOTAL</td>
+                        <td><input id="TotalStandart" type="text" class="small-input bg-green" readonly></td>
+                        <td><input id="TotalActual" type="text" class="small-input bg-green" readonly></td>
+                        <td><input id="TotalQuality" type="text" class="small-input bg-grey"></td> <td><input id="TotalSafety" type="text" class="small-input bg-grey"></td> </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="group-box">
+        <h4>🗑️ Input Waste (1-15)</h4>
+        <div class="waste-container-new">
+            <div class="input-row pos-w1"><input id="Waste1" type="number" min="0" placeholder="W1"></div>
+            <div class="input-row pos-w2"><input id="Waste2" type="number" min="0" placeholder="W2"></div>
+            <div class="input-row pos-w3"><input id="Waste3" type="number" min="0" placeholder="W3"></div>
+            <div class="input-row pos-w4"><input id="Waste4" type="number" min="0" placeholder="W4"></div>
+            <div class="input-row pos-w5"><input id="Waste5" type="number" min="0" placeholder="W5"></div>
+            <div class="input-row pos-w6"><input id="Waste6" type="number" min="0" placeholder="W6"></div>
+            <div class="input-row pos-w7"><input id="Waste7" type="number" min="0" placeholder="W7"></div>
+            <div class="input-row pos-w8"><input id="Waste8" type="number" min="0" placeholder="W8"></div>
+            <div class="input-row pos-w9"><input id="Waste9" type="number" min="0" placeholder="W9"></div>
+            <div class="input-row pos-w10"><input id="Waste10" type="number" min="0" placeholder="W10"></div>
+            <div class="waste-color-bar">
+                <div class="bar-segment bar-red"></div>
+                <div class="bar-segment bar-yellow"></div>
+                <div class="bar-segment bar-green"></div>
+            </div>
+            <div class="input-row pos-w11"><input id="Waste11" type="number" min="0" placeholder="W11"></div>
+            <div class="input-row pos-w12"><input id="Waste12" type="number" min="0" placeholder="W12"></div>
+            <div class="input-row pos-w13"><input id="Waste13" type="number" min="0" placeholder="W13"></div>
+            <div class="input-row pos-w14"><input id="Waste14" type="number" min="0" placeholder="W14"></div>
+            <div class="input-row pos-w15"><input id="Waste15" type="number" min="0" placeholder="W15"></div>
+        </div>
+        <div class="waste-total-row">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: bold; color: #0078d4; font-size: 14px; margin:0;">TOTAL WASTE:</label>
+                <input id="TotalWaste" type="text" readonly style="background-color: #dff6dd; font-weight: bold; width: 60%; text-align: center; border: 1px solid #107c10; font-size: 14px; height: 35px; margin-bottom: 0;">
             </div>
         </div>
+    </div>
 
-        <hr>
+    <div class="group-box">
+        <h4>📊 Statistik Incident</h4>
+        <div class="grid-3">
+            <div><label>Freq. Breakdown</label><input id="FreqBreakdown" type="number" min="0"></div>
+            <div><label>Freq. Ops Failure</label><input id="FreqOpsFailure" type="number" min="0"></div>
+            <div><label>Total Head</label><input id="TotalHead" type="number" min="0"></div>
+            <div><label>Cedera Kecil</label><input id="CederaKecil" type="number" min="0"></div>
+            <div><label>Cedera Catat</label><input id="CederaTercatat" type="number" min="0"></div>
+            <div><label>Hampir Celaka</label><input id="HampirCelaka" type="number" min="0"></div>
+            <div><label>FSQ Habit</label><input id="FSQHabit" type="number" min="0"></div>
+            <div><label>Insiden Quality</label><input id="InsidenKualitas" type="number" min="0"></div>
+            <div><label>CIL</label><input id="CIL" type="number" min="0"></div>
+            <div><label>Centerline %</label><input id="Centerline1" type="number" min="0"></div>
+            <div><label>Centerline Jumlah</label><input id="Centerline2" type="number" min="0"></div>
+            <div><label>Skor 5S</label><input id="Skor5S" type="number" min="0"></div>
+            <div><label>Temuan Abnormality</label><input id="TemuanAbnormality" type="number" min="0"></div>
+            <div><label>Perbaikan Abnormality</label><input id="PerbaikanAbnormality" type="number" min="0"></div>
+        </div>
+    </div>
 
-        <div class="group-box">
-            <h4>ℹ️ Informasi Umum</h4>
-            <div class="grid-2">
-                <div><label>Hari:</label><input id="Hari" type="text" readonly></div>
-                <div><label>Tanggal:</label><input id="Tanggal" type="date"></div>
-                <div>
-                    <label>Shift:</label>
-                    <select id="Shift"><option value="">--Loading--</option></select>
-                </div>
-                <div>
-                    <label>Line:</label>
-                    <select id="Line">
-                        <option value="">--Pilih Line--</option>
-                        <option value="A">A</option><option value="B">B</option><option value="C">C</option>
-                        <option value="D">D</option><option value="E">E</option><option value="F">F</option>
-                        <option value="G">G</option>
-                    </select>
-                </div>
-                <div><label>Leader:</label><select id="Leader"><option value="">--Pilih Leader--</option></select></div>
-                <div><label>Team:</label><select id="Team"><option value="">--Pilih Team--</option></select></div>
-                <div><label>Supervisor:</label><select id="Supervisor"><option value="">--Pilih Supervisor--</option></select></div>
-                <div><label>Target OEE (%):</label><input id="TargetOEE" type="text" readonly></div>
-                <div><label>SKU Code:</label><input id="SKUCode" type="text" placeholder="Scan/Ketik"></div>
-                <div><label>SKU Name:</label><input id="SKUName" type="text" readonly></div>
-                <div><label>Tanggal Masak:</label><input id="TanggalMasak" type="text" placeholder="Contoh: 10 Des / 10-12-2025"></div>
-                <div><label>No Tangki:</label><input id="NoTangki" type="text"></div>
-                <div><label>EXP Code:</label><input id="EXPCode" type="text"></div>
-                <div><label>No SO:</label><input id="NoSO" type="text"></div>
+    <div class="group-box">
+        <h4>🔴 Unscheduled Loss (TUT)</h4>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Machine</th><th>UTND</th><th>CIMOH</th><th>NPT</th></tr></thead>
+                <tbody>
+                    <tr><td><input id="TUTMachine1" type="text" class="small-input"></td><td><input id="UTND1" type="text" class="small-input" readonly></td><td><input id="CIMOH1" type="text" class="small-input" readonly></td><td><input id="NPT1" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine2" type="text" class="small-input"></td><td><input id="UTND2" type="text" class="small-input" readonly></td><td><input id="CIMOH2" type="text" class="small-input" readonly></td><td><input id="NPT2" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine3" type="text" class="small-input"></td><td><input id="UTND3" type="text" class="small-input" readonly></td><td><input id="CIMOH3" type="text" class="small-input" readonly></td><td><input id="NPT3" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine4" type="text" class="small-input"></td><td><input id="UTND4" type="text" class="small-input" readonly></td><td><input id="CIMOH4" type="text" class="small-input" readonly></td><td><input id="NPT4" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine5" type="text" class="small-input"></td><td><input id="UTND5" type="text" class="small-input" readonly></td><td><input id="CIMOH5" type="text" class="small-input" readonly></td><td><input id="NPT5" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine6" type="text" class="small-input"></td><td><input id="UTND6" type="text" class="small-input" readonly></td><td><input id="CIMOH6" type="text" class="small-input" readonly></td><td><input id="NPT6" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine7" type="text" class="small-input"></td><td><input id="UTND7" type="text" class="small-input" readonly></td><td><input id="CIMOH7" type="text" class="small-input" readonly></td><td><input id="NPT7" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine8" type="text" class="small-input"></td><td><input id="UTND8" type="text" class="small-input" readonly></td><td><input id="CIMOH8" type="text" class="small-input" readonly></td><td><input id="NPT8" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine9" type="text" class="small-input"></td><td><input id="UTND9" type="text" class="small-input" readonly></td><td><input id="CIMOH9" type="text" class="small-input" readonly></td><td><input id="NPT9" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine10" type="text" class="small-input"></td><td><input id="UTND10" type="text" class="small-input" readonly></td><td><input id="CIMOH10" type="text" class="small-input" readonly></td><td><input id="NPT10" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine11" type="text" class="small-input"></td><td><input id="UTND11" type="text" class="small-input" readonly></td><td><input id="CIMOH11" type="text" class="small-input" readonly></td><td><input id="NPT11" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine12" type="text" class="small-input"></td><td><input id="UTND12" type="text" class="small-input" readonly></td><td><input id="CIMOH12" type="text" class="small-input" readonly></td><td><input id="NPT12" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="TUTMachine13" type="text" class="small-input"></td><td><input id="UTND13" type="text" class="small-input" readonly></td><td><input id="CIMOH13" type="text" class="small-input" readonly></td><td><input id="NPT13" type="text" class="small-input" readonly></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="group-box">
+        <h4>🟡 Planned Downtime (PDT)</h4>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Machine</th><th>PM</th><th>PS</th><th>PCO</th><th>BM</th></tr></thead>
+                <tbody>
+                    <tr><td><input id="PDTMachine1" type="text" class="small-input"></td><td><input id="PM1" type="text" class="small-input" readonly></td><td><input id="PS1" type="text" class="small-input" readonly></td><td><input id="PCO1" type="text" class="small-input" readonly></td><td><input id="BM1" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine2" type="text" class="small-input"></td><td><input id="PM2" type="text" class="small-input" readonly></td><td><input id="PS2" type="text" class="small-input" readonly></td><td><input id="PCO2" type="text" class="small-input" readonly></td><td><input id="BM2" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine3" type="text" class="small-input"></td><td><input id="PM3" type="text" class="small-input" readonly></td><td><input id="PS3" type="text" class="small-input" readonly></td><td><input id="PCO3" type="text" class="small-input" readonly></td><td><input id="BM3" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine4" type="text" class="small-input"></td><td><input id="PM4" type="text" class="small-input" readonly></td><td><input id="PS4" type="text" class="small-input" readonly></td><td><input id="PCO4" type="text" class="small-input" readonly></td><td><input id="BM4" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine5" type="text" class="small-input"></td><td><input id="PM5" type="text" class="small-input" readonly></td><td><input id="PS5" type="text" class="small-input" readonly></td><td><input id="PCO5" type="text" class="small-input" readonly></td><td><input id="BM5" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine6" type="text" class="small-input"></td><td><input id="PM6" type="text" class="small-input" readonly></td><td><input id="PS6" type="text" class="small-input" readonly></td><td><input id="PCO6" type="text" class="small-input" readonly></td><td><input id="BM6" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine7" type="text" class="small-input"></td><td><input id="PM7" type="text" class="small-input" readonly></td><td><input id="PS7" type="text" class="small-input" readonly></td><td><input id="PCO7" type="text" class="small-input" readonly></td><td><input id="BM7" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine8" type="text" class="small-input"></td><td><input id="PM8" type="text" class="small-input" readonly></td><td><input id="PS8" type="text" class="small-input" readonly></td><td><input id="PCO8" type="text" class="small-input" readonly></td><td><input id="BM8" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine9" type="text" class="small-input"></td><td><input id="PM9" type="text" class="small-input" readonly></td><td><input id="PS9" type="text" class="small-input" readonly></td><td><input id="PCO9" type="text" class="small-input" readonly></td><td><input id="BM9" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine10" type="text" class="small-input"></td><td><input id="PM10" type="text" class="small-input" readonly></td><td><input id="PS10" type="text" class="small-input" readonly></td><td><input id="PCO10" type="text" class="small-input" readonly></td><td><input id="BM10" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine11" type="text" class="small-input"></td><td><input id="PM11" type="text" class="small-input" readonly></td><td><input id="PS11" type="text" class="small-input" readonly></td><td><input id="PCO11" type="text" class="small-input" readonly></td><td><input id="BM11" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine12" type="text" class="small-input"></td><td><input id="PM12" type="text" class="small-input" readonly></td><td><input id="PS12" type="text" class="small-input" readonly></td><td><input id="PCO12" type="text" class="small-input" readonly></td><td><input id="BM12" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="PDTMachine13" type="text" class="small-input"></td><td><input id="PM13" type="text" class="small-input" readonly></td><td><input id="PS13" type="text" class="small-input" readonly></td><td><input id="PCO13" type="text" class="small-input" readonly></td><td><input id="BM13" type="text" class="small-input" readonly></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="group-box">
+        <h4>🔵 Unplanned Downtime (UPDT)</h4>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Machine</th><th>OLPS</th><th>EQFB</th><th>LOG</th><th>PRL</th><th>QUAL</th></tr></thead>
+                <tbody>
+                    <tr><td><input id="UPDTMachine1" type="text" class="small-input"></td><td><input id="OLPS1" type="text" class="small-input" readonly></td><td><input id="EQFB1" type="text" class="small-input" readonly></td><td><input id="LOG1" type="text" class="small-input" readonly></td><td><input id="PRL1" type="text" class="small-input" readonly></td><td><input id="QUAL1" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine2" type="text" class="small-input"></td><td><input id="OLPS2" type="text" class="small-input" readonly></td><td><input id="EQFB2" type="text" class="small-input" readonly></td><td><input id="LOG2" type="text" class="small-input" readonly></td><td><input id="PRL2" type="text" class="small-input" readonly></td><td><input id="QUAL2" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine3" type="text" class="small-input"></td><td><input id="OLPS3" type="text" class="small-input" readonly></td><td><input id="EQFB3" type="text" class="small-input" readonly></td><td><input id="LOG3" type="text" class="small-input" readonly></td><td><input id="PRL3" type="text" class="small-input" readonly></td><td><input id="QUAL3" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine4" type="text" class="small-input"></td><td><input id="OLPS4" type="text" class="small-input" readonly></td><td><input id="EQFB4" type="text" class="small-input" readonly></td><td><input id="LOG4" type="text" class="small-input" readonly></td><td><input id="PRL4" type="text" class="small-input" readonly></td><td><input id="QUAL4" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine5" type="text" class="small-input"></td><td><input id="OLPS5" type="text" class="small-input" readonly></td><td><input id="EQFB5" type="text" class="small-input" readonly></td><td><input id="LOG5" type="text" class="small-input" readonly></td><td><input id="PRL5" type="text" class="small-input" readonly></td><td><input id="QUAL5" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine6" type="text" class="small-input"></td><td><input id="OLPS6" type="text" class="small-input" readonly></td><td><input id="EQFB6" type="text" class="small-input" readonly></td><td><input id="LOG6" type="text" class="small-input" readonly></td><td><input id="PRL6" type="text" class="small-input" readonly></td><td><input id="QUAL6" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine7" type="text" class="small-input"></td><td><input id="OLPS7" type="text" class="small-input" readonly></td><td><input id="EQFB7" type="text" class="small-input" readonly></td><td><input id="LOG7" type="text" class="small-input" readonly></td><td><input id="PRL7" type="text" class="small-input" readonly></td><td><input id="QUAL7" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine8" type="text" class="small-input"></td><td><input id="OLPS8" type="text" class="small-input" readonly></td><td><input id="EQFB8" type="text" class="small-input" readonly></td><td><input id="LOG8" type="text" class="small-input" readonly></td><td><input id="PRL8" type="text" class="small-input" readonly></td><td><input id="QUAL8" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine9" type="text" class="small-input"></td><td><input id="OLPS9" type="text" class="small-input" readonly></td><td><input id="EQFB9" type="text" class="small-input" readonly></td><td><input id="LOG9" type="text" class="small-input" readonly></td><td><input id="PRL9" type="text" class="small-input" readonly></td><td><input id="QUAL9" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine10" type="text" class="small-input"></td><td><input id="OLPS10" type="text" class="small-input" readonly></td><td><input id="EQFB10" type="text" class="small-input" readonly></td><td><input id="LOG10" type="text" class="small-input" readonly></td><td><input id="PRL10" type="text" class="small-input" readonly></td><td><input id="QUAL10" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine11" type="text" class="small-input"></td><td><input id="OLPS11" type="text" class="small-input" readonly></td><td><input id="EQFB11" type="text" class="small-input" readonly></td><td><input id="LOG11" type="text" class="small-input" readonly></td><td><input id="PRL11" type="text" class="small-input" readonly></td><td><input id="QUAL11" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine12" type="text" class="small-input"></td><td><input id="OLPS12" type="text" class="small-input" readonly></td><td><input id="EQFB12" type="text" class="small-input" readonly></td><td><input id="LOG12" type="text" class="small-input" readonly></td><td><input id="PRL12" type="text" class="small-input" readonly></td><td><input id="QUAL12" type="text" class="small-input" readonly></td></tr>
+                    <tr><td><input id="UPDTMachine13" type="text" class="small-input"></td><td><input id="OLPS13" type="text" class="small-input" readonly></td><td><input id="EQFB13" type="text" class="small-input" readonly></td><td><input id="LOG13" type="text" class="small-input" readonly></td><td><input id="PRL13" type="text" class="small-input" readonly></td><td><input id="QUAL13" type="text" class="small-input" readonly></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="group-box" style="background-color: #f3f2f1; border-left: 5px solid #0078d4;">
+        <h4>⏱️ Acuan Waktu Hilang (DT)</h4>
+        <p style="font-size: 11px; margin-bottom: 5px; color: #666; font-style: italic;">*Jika angka merah muncul (DT > 0), harap isi detail downtime dibawah sesuai jam yang tertera.</p>
+        
+        <div class="grid-5">
+            <div class="ref-box">
+                <input id="Hour11" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT1" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour12" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT2" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour13" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT3" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour14" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT4" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour15" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT5" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour16" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT6" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour17" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT7" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour18" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT8" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour19" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT9" class="ref-dt" readonly placeholder="0">
+            </div>
+            <div class="ref-box">
+                <input id="Hour20" class="ref-time" readonly>
+                <div class="ref-separator"></div>
+                <input id="DT10" class="ref-dt" readonly placeholder="0">
             </div>
         </div>
+    </div>
 
-        <div class="group-box">
-            <h4>🏭 Data Produksi</h4>
-            <div class="grid-3">
-                <div><label>Start Prod:</label><input id="StartProduction" type="time"></div>
-                <div><label>End Prod:</label><input id="EndProduction" type="time"></div>
-                <div><label>Total Jam:</label><input id="TotalJam" type="text" readonly></div>
-                <div><label>Plan (Dus):</label><input id="Planning" type="number" min="0"></div>
-                <div><label>Speed/Jam:</label><input id="SpeedJam" type="number" min="0"></div>
-                <div><label>Isi 1 Dus:</label><input id="Isi1Dus" type="number" min="0"></div>
-                <div><label>Total Pcs:</label><input id="TotalPcs" type="text" readonly></div>
-            </div>
+    <div class="group-box">
+        <h4>⚙️ Input Detail Downtime</h4>
+        <div id="dynamic-downtime-container"></div>
+        <div style="text-align: center; margin-top: 10px;">
+            <button type="button" id="AddDowntimeBtn" style="width: 45px; height: 45px; border-radius: 50%; background-color: #0078d4; color: white; font-size: 24px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">+</button>
         </div>
+    </div>
 
-        <div class="group-box">
-            <h4>⏱️ Data Per Jam (Input)</h4>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:100px;">Jam</th>
-                            <th>Standart</th>
-                            <th>Actual</th>
-                            <th>Quality</th>
-                            <th>Safety</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><input id="Hour1" type="text" class="small-input" readonly></td><td><input id="Standart1" type="text" class="small-input"></td><td><input id="Actual1" type="text" class="small-input"></td><td><input id="Quality1" type="text" class="small-input"></td><td><input id="Safety1" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour2" type="text" class="small-input" readonly></td><td><input id="Standart2" type="text" class="small-input"></td><td><input id="Actual2" type="text" class="small-input"></td><td><input id="Quality2" type="text" class="small-input"></td><td><input id="Safety2" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour3" type="text" class="small-input" readonly></td><td><input id="Standart3" type="text" class="small-input"></td><td><input id="Actual3" type="text" class="small-input"></td><td><input id="Quality3" type="text" class="small-input"></td><td><input id="Safety3" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour4" type="text" class="small-input" readonly></td><td><input id="Standart4" type="text" class="small-input"></td><td><input id="Actual4" type="text" class="small-input"></td><td><input id="Quality4" type="text" class="small-input"></td><td><input id="Safety4" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour5" type="text" class="small-input" readonly></td><td><input id="Standart5" type="text" class="small-input"></td><td><input id="Actual5" type="text" class="small-input"></td><td><input id="Quality5" type="text" class="small-input"></td><td><input id="Safety5" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour6" type="text" class="small-input" readonly></td><td><input id="Standart6" type="text" class="small-input"></td><td><input id="Actual6" type="text" class="small-input"></td><td><input id="Quality6" type="text" class="small-input"></td><td><input id="Safety6" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour7" type="text" class="small-input" readonly></td><td><input id="Standart7" type="text" class="small-input"></td><td><input id="Actual7" type="text" class="small-input"></td><td><input id="Quality7" type="text" class="small-input"></td><td><input id="Safety7" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour8" type="text" class="small-input" readonly></td><td><input id="Standart8" type="text" class="small-input"></td><td><input id="Actual8" type="text" class="small-input"></td><td><input id="Quality8" type="text" class="small-input"></td><td><input id="Safety8" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour9" type="text" class="small-input" readonly></td><td><input id="Standart9" type="text" class="small-input"></td><td><input id="Actual9" type="text" class="small-input"></td><td><input id="Quality9" type="text" class="small-input"></td><td><input id="Safety9" type="text" class="small-input"></td></tr>
-                        <tr><td><input id="Hour10" type="text" class="small-input" readonly></td><td><input id="Standart10" type="text" class="small-input"></td><td><input id="Actual10" type="text" class="small-input"></td><td><input id="Quality10" type="text" class="small-input"></td><td><input id="Safety10" type="text" class="small-input"></td></tr>
-                        
-                        <tr class="total-row">
-                            <td class="label-cell">TOTAL</td>
-                            <td><input id="TotalStandart" type="text" class="small-input bg-green" readonly></td>
-                            <td><input id="TotalActual" type="text" class="small-input bg-green" readonly></td>
-                            <td><input id="TotalQuality" type="text" class="small-input bg-grey"></td> <td><input id="TotalSafety" type="text" class="small-input bg-grey"></td> </tr>
-                    </tbody>
-                </table>
-            </div>
+    <div class="group-box">
+        <h4>📈 Summary Total Loss</h4>
+        <div class="grid-2">
+            <div><label>Tot. UTND</label><input id="Total_UTND" type="text" readonly class="bg-red"></div>
+            <div><label>Tot. CIMOH</label><input id="Total_CIMOH" type="text" readonly class="bg-red"></div>
+            <div><label>Tot. NPT</label><input id="Total_NPT" type="text" readonly class="bg-yellow"></div>
+            <div><label>Tot. PM</label><input id="Total_PM" type="text" readonly class="bg-blue"></div>
+            <div><label>Tot. PS</label><input id="Total_PS" type="text" readonly class="bg-blue"></div>
+            <div><label>Tot. PCO</label><input id="Total_PCO" type="text" readonly class="bg-blue"></div>
+            <div><label>Tot. BM</label><input id="Total_BM" type="text" readonly class="bg-grey"></div>
+            <div><label>Tot. OLPS</label><input id="Total_OLPS" type="text" readonly class="bg-yellow"></div>
+            <div><label>Tot. EQFB</label><input id="Total_EQFB" type="text" readonly class="bg-red"></div>
+            <div><label>Tot. LOG</label><input id="Total_LOG" type="text" readonly class="bg-yellow"></div>
+            <div><label>Tot. PRL</label><input id="Total_PRL" type="text" readonly class="bg-grey"></div>
+            <div><label>Tot. QUAL</label><input id="Total_QUAL" type="text" readonly class="bg-red"></div>
         </div>
+    </div>
 
-        <div class="group-box">
-            <h4>🗑️ Input Waste (1-15)</h4>
-            <div class="waste-container-new">
-                <div class="input-row pos-w1"><input id="Waste1" type="number" min="0" placeholder="W1"></div>
-                <div class="input-row pos-w2"><input id="Waste2" type="number" min="0" placeholder="W2"></div>
-                <div class="input-row pos-w3"><input id="Waste3" type="number" min="0" placeholder="W3"></div>
-                <div class="input-row pos-w4"><input id="Waste4" type="number" min="0" placeholder="W4"></div>
-                <div class="input-row pos-w5"><input id="Waste5" type="number" min="0" placeholder="W5"></div>
-                <div class="input-row pos-w6"><input id="Waste6" type="number" min="0" placeholder="W6"></div>
-                <div class="input-row pos-w7"><input id="Waste7" type="number" min="0" placeholder="W7"></div>
-                <div class="input-row pos-w8"><input id="Waste8" type="number" min="0" placeholder="W8"></div>
-                <div class="input-row pos-w9"><input id="Waste9" type="number" min="0" placeholder="W9"></div>
-                <div class="input-row pos-w10"><input id="Waste10" type="number" min="0" placeholder="W10"></div>
-                <div class="waste-color-bar">
-                    <div class="bar-segment bar-red"></div>
-                    <div class="bar-segment bar-yellow"></div>
-                    <div class="bar-segment bar-green"></div>
-                </div>
-                <div class="input-row pos-w11"><input id="Waste11" type="number" min="0" placeholder="W11"></div>
-                <div class="input-row pos-w12"><input id="Waste12" type="number" min="0" placeholder="W12"></div>
-                <div class="input-row pos-w13"><input id="Waste13" type="number" min="0" placeholder="W13"></div>
-                <div class="input-row pos-w14"><input id="Waste14" type="number" min="0" placeholder="W14"></div>
-                <div class="input-row pos-w15"><input id="Waste15" type="number" min="0" placeholder="W15"></div>
-            </div>
-            <div class="waste-total-row">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <label style="font-weight: bold; color: #0078d4; font-size: 14px; margin:0;">TOTAL WASTE:</label>
-                    <input id="TotalWaste" type="text" readonly style="background-color: #dff6dd; font-weight: bold; width: 60%; text-align: center; border: 1px solid #107c10; font-size: 14px; height: 35px; margin-bottom: 0;">
-                </div>
-            </div>
+    <button id="SubmitBtn" class="btn-success" style="width: 100%; padding: 15px; font-size: 16px; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        💾 SIMPAN DATA
+    </button>
+    
+    <div style="height: 50px;"></div>
+
+    <div id="deleteModal" class="modal-overlay">
+      <div class="modal-box">
+        <h3>⚠️ PERINGATAN PENGHAPUSAN</h3>
+        <p>Anda yakin ingin menghapus data dengan ID:</p>
+        <div class="id-display" id="modalIDDisplay"></div>
+        <p style="font-size: 13px; color: #605e5c;">Tindakan ini TIDAK DAPAT dibatalkan!</p>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">❌ Batal</button>
+          <button class="modal-btn modal-btn-confirm" onclick="confirmDelete()">🗑️ Ya, Hapus</button>
         </div>
+      </div>
+    </div>
 
-        <div class="group-box">
-            <h4>📊 Statistik Incident</h4>
-            <div class="grid-3">
-                <div><label>F. Breakdown</label><input id="FreqBreakdown" type="number" min="0"></div>
-                <div><label>F. Ops Fail</label><input id="FreqOpsFailure" type="number" min="0"></div>
-                <div><label>Total Head</label><input id="TotalHead" type="number" min="0"></div>
-                <div><label>Cedera Kecil</label><input id="CederaKecil" type="number" min="0"></div>
-                <div><label>Cedera Catat</label><input id="CederaTercatat" type="number" min="0"></div>
-                <div><label>Hampir Celaka</label><input id="HampirCelaka" type="number" min="0"></div>
-                <div><label>FSQ Habit</label><input id="FSQHabit" type="number" min="0"></div>
-                <div><label>Insiden Qual</label><input id="InsidenKualitas" type="number" min="0"></div>
-                <div><label>CIL</label><input id="CIL" type="number" min="0"></div>
-                <div><label>Centerline %</label><input id="Centerline1" type="number" min="0"></div>
-                <div><label>Centerline Jml</label><input id="Centerline2" type="number" min="0"></div>
-                <div><label>Skor 5S</label><input id="Skor5S" type="number" min="0"></div>
-                <div><label>Temuan Abn</label><input id="TemuanAbnormality" type="number" min="0"></div>
-                <div><label>Perbaikan Abn</label><input id="PerbaikanAbnormality" type="number" min="0"></div>
-            </div>
-        </div>
-
-        <div class="group-box">
-            <h4>🔴 Unscheduled Loss (TUT)</h4>
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Machine</th><th>UTND</th><th>CIMOH</th><th>NPT</th></tr></thead>
-                    <tbody>
-                        <tr><td><input id="TUTMachine1" type="text" class="small-input"></td><td><input id="UTND1" type="text" class="small-input" readonly></td><td><input id="CIMOH1" type="text" class="small-input" readonly></td><td><input id="NPT1" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine2" type="text" class="small-input"></td><td><input id="UTND2" type="text" class="small-input" readonly></td><td><input id="CIMOH2" type="text" class="small-input" readonly></td><td><input id="NPT2" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine3" type="text" class="small-input"></td><td><input id="UTND3" type="text" class="small-input" readonly></td><td><input id="CIMOH3" type="text" class="small-input" readonly></td><td><input id="NPT3" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine4" type="text" class="small-input"></td><td><input id="UTND4" type="text" class="small-input" readonly></td><td><input id="CIMOH4" type="text" class="small-input" readonly></td><td><input id="NPT4" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine5" type="text" class="small-input"></td><td><input id="UTND5" type="text" class="small-input" readonly></td><td><input id="CIMOH5" type="text" class="small-input" readonly></td><td><input id="NPT5" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine6" type="text" class="small-input"></td><td><input id="UTND6" type="text" class="small-input" readonly></td><td><input id="CIMOH6" type="text" class="small-input" readonly></td><td><input id="NPT6" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine7" type="text" class="small-input"></td><td><input id="UTND7" type="text" class="small-input" readonly></td><td><input id="CIMOH7" type="text" class="small-input" readonly></td><td><input id="NPT7" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine8" type="text" class="small-input"></td><td><input id="UTND8" type="text" class="small-input" readonly></td><td><input id="CIMOH8" type="text" class="small-input" readonly></td><td><input id="NPT8" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine9" type="text" class="small-input"></td><td><input id="UTND9" type="text" class="small-input" readonly></td><td><input id="CIMOH9" type="text" class="small-input" readonly></td><td><input id="NPT9" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine10" type="text" class="small-input"></td><td><input id="UTND10" type="text" class="small-input" readonly></td><td><input id="CIMOH10" type="text" class="small-input" readonly></td><td><input id="NPT10" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine11" type="text" class="small-input"></td><td><input id="UTND11" type="text" class="small-input" readonly></td><td><input id="CIMOH11" type="text" class="small-input" readonly></td><td><input id="NPT11" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine12" type="text" class="small-input"></td><td><input id="UTND12" type="text" class="small-input" readonly></td><td><input id="CIMOH12" type="text" class="small-input" readonly></td><td><input id="NPT12" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="TUTMachine13" type="text" class="small-input"></td><td><input id="UTND13" type="text" class="small-input" readonly></td><td><input id="CIMOH13" type="text" class="small-input" readonly></td><td><input id="NPT13" type="text" class="small-input" readonly></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="group-box">
-            <h4>🟡 Planned Downtime (PDT)</h4>
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Machine</th><th>PM</th><th>PS</th><th>PCO</th><th>BM</th></tr></thead>
-                    <tbody>
-                        <tr><td><input id="PDTMachine1" type="text" class="small-input"></td><td><input id="PM1" type="text" class="small-input" readonly></td><td><input id="PS1" type="text" class="small-input" readonly></td><td><input id="PCO1" type="text" class="small-input" readonly></td><td><input id="BM1" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine2" type="text" class="small-input"></td><td><input id="PM2" type="text" class="small-input" readonly></td><td><input id="PS2" type="text" class="small-input" readonly></td><td><input id="PCO2" type="text" class="small-input" readonly></td><td><input id="BM2" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine3" type="text" class="small-input"></td><td><input id="PM3" type="text" class="small-input" readonly></td><td><input id="PS3" type="text" class="small-input" readonly></td><td><input id="PCO3" type="text" class="small-input" readonly></td><td><input id="BM3" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine4" type="text" class="small-input"></td><td><input id="PM4" type="text" class="small-input" readonly></td><td><input id="PS4" type="text" class="small-input" readonly></td><td><input id="PCO4" type="text" class="small-input" readonly></td><td><input id="BM4" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine5" type="text" class="small-input"></td><td><input id="PM5" type="text" class="small-input" readonly></td><td><input id="PS5" type="text" class="small-input" readonly></td><td><input id="PCO5" type="text" class="small-input" readonly></td><td><input id="BM5" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine6" type="text" class="small-input"></td><td><input id="PM6" type="text" class="small-input" readonly></td><td><input id="PS6" type="text" class="small-input" readonly></td><td><input id="PCO6" type="text" class="small-input" readonly></td><td><input id="BM6" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine7" type="text" class="small-input"></td><td><input id="PM7" type="text" class="small-input" readonly></td><td><input id="PS7" type="text" class="small-input" readonly></td><td><input id="PCO7" type="text" class="small-input" readonly></td><td><input id="BM7" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine8" type="text" class="small-input"></td><td><input id="PM8" type="text" class="small-input" readonly></td><td><input id="PS8" type="text" class="small-input" readonly></td><td><input id="PCO8" type="text" class="small-input" readonly></td><td><input id="BM8" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine9" type="text" class="small-input"></td><td><input id="PM9" type="text" class="small-input" readonly></td><td><input id="PS9" type="text" class="small-input" readonly></td><td><input id="PCO9" type="text" class="small-input" readonly></td><td><input id="BM9" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine10" type="text" class="small-input"></td><td><input id="PM10" type="text" class="small-input" readonly></td><td><input id="PS10" type="text" class="small-input" readonly></td><td><input id="PCO10" type="text" class="small-input" readonly></td><td><input id="BM10" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine11" type="text" class="small-input"></td><td><input id="PM11" type="text" class="small-input" readonly></td><td><input id="PS11" type="text" class="small-input" readonly></td><td><input id="PCO11" type="text" class="small-input" readonly></td><td><input id="BM11" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine12" type="text" class="small-input"></td><td><input id="PM12" type="text" class="small-input" readonly></td><td><input id="PS12" type="text" class="small-input" readonly></td><td><input id="PCO12" type="text" class="small-input" readonly></td><td><input id="BM12" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="PDTMachine13" type="text" class="small-input"></td><td><input id="PM13" type="text" class="small-input" readonly></td><td><input id="PS13" type="text" class="small-input" readonly></td><td><input id="PCO13" type="text" class="small-input" readonly></td><td><input id="BM13" type="text" class="small-input" readonly></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="group-box">
-            <h4>🔵 Unplanned Downtime (UPDT)</h4>
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Machine</th><th>OLPS</th><th>EQFB</th><th>LOG</th><th>PRL</th><th>QUAL</th></tr></thead>
-                    <tbody>
-                        <tr><td><input id="UPDTMachine1" type="text" class="small-input"></td><td><input id="OLPS1" type="text" class="small-input" readonly></td><td><input id="EQFB1" type="text" class="small-input" readonly></td><td><input id="LOG1" type="text" class="small-input" readonly></td><td><input id="PRL1" type="text" class="small-input" readonly></td><td><input id="QUAL1" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine2" type="text" class="small-input"></td><td><input id="OLPS2" type="text" class="small-input" readonly></td><td><input id="EQFB2" type="text" class="small-input" readonly></td><td><input id="LOG2" type="text" class="small-input" readonly></td><td><input id="PRL2" type="text" class="small-input" readonly></td><td><input id="QUAL2" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine3" type="text" class="small-input"></td><td><input id="OLPS3" type="text" class="small-input" readonly></td><td><input id="EQFB3" type="text" class="small-input" readonly></td><td><input id="LOG3" type="text" class="small-input" readonly></td><td><input id="PRL3" type="text" class="small-input" readonly></td><td><input id="QUAL3" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine4" type="text" class="small-input"></td><td><input id="OLPS4" type="text" class="small-input" readonly></td><td><input id="EQFB4" type="text" class="small-input" readonly></td><td><input id="LOG4" type="text" class="small-input" readonly></td><td><input id="PRL4" type="text" class="small-input" readonly></td><td><input id="QUAL4" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine5" type="text" class="small-input"></td><td><input id="OLPS5" type="text" class="small-input" readonly></td><td><input id="EQFB5" type="text" class="small-input" readonly></td><td><input id="LOG5" type="text" class="small-input" readonly></td><td><input id="PRL5" type="text" class="small-input" readonly></td><td><input id="QUAL5" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine6" type="text" class="small-input"></td><td><input id="OLPS6" type="text" class="small-input" readonly></td><td><input id="EQFB6" type="text" class="small-input" readonly></td><td><input id="LOG6" type="text" class="small-input" readonly></td><td><input id="PRL6" type="text" class="small-input" readonly></td><td><input id="QUAL6" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine7" type="text" class="small-input"></td><td><input id="OLPS7" type="text" class="small-input" readonly></td><td><input id="EQFB7" type="text" class="small-input" readonly></td><td><input id="LOG7" type="text" class="small-input" readonly></td><td><input id="PRL7" type="text" class="small-input" readonly></td><td><input id="QUAL7" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine8" type="text" class="small-input"></td><td><input id="OLPS8" type="text" class="small-input" readonly></td><td><input id="EQFB8" type="text" class="small-input" readonly></td><td><input id="LOG8" type="text" class="small-input" readonly></td><td><input id="PRL8" type="text" class="small-input" readonly></td><td><input id="QUAL8" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine9" type="text" class="small-input"></td><td><input id="OLPS9" type="text" class="small-input" readonly></td><td><input id="EQFB9" type="text" class="small-input" readonly></td><td><input id="LOG9" type="text" class="small-input" readonly></td><td><input id="PRL9" type="text" class="small-input" readonly></td><td><input id="QUAL9" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine10" type="text" class="small-input"></td><td><input id="OLPS10" type="text" class="small-input" readonly></td><td><input id="EQFB10" type="text" class="small-input" readonly></td><td><input id="LOG10" type="text" class="small-input" readonly></td><td><input id="PRL10" type="text" class="small-input" readonly></td><td><input id="QUAL10" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine11" type="text" class="small-input"></td><td><input id="OLPS11" type="text" class="small-input" readonly></td><td><input id="EQFB11" type="text" class="small-input" readonly></td><td><input id="LOG11" type="text" class="small-input" readonly></td><td><input id="PRL11" type="text" class="small-input" readonly></td><td><input id="QUAL11" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine12" type="text" class="small-input"></td><td><input id="OLPS12" type="text" class="small-input" readonly></td><td><input id="EQFB12" type="text" class="small-input" readonly></td><td><input id="LOG12" type="text" class="small-input" readonly></td><td><input id="PRL12" type="text" class="small-input" readonly></td><td><input id="QUAL12" type="text" class="small-input" readonly></td></tr>
-                        <tr><td><input id="UPDTMachine13" type="text" class="small-input"></td><td><input id="OLPS13" type="text" class="small-input" readonly></td><td><input id="EQFB13" type="text" class="small-input" readonly></td><td><input id="LOG13" type="text" class="small-input" readonly></td><td><input id="PRL13" type="text" class="small-input" readonly></td><td><input id="QUAL13" type="text" class="small-input" readonly></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="group-box" style="background-color: #f3f2f1; border-left: 5px solid #0078d4;">
-            <h4>⏱️ Acuan Waktu Hilang (DT)</h4>
-            <p style="font-size: 11px; margin-bottom: 5px; color: #666; font-style: italic;">*Jika angka merah muncul (DT > 0), harap isi detail downtime dibawah sesuai jam yang tertera.</p>
-            
-            <div class="grid-5">
-                <div class="ref-box">
-                    <input id="Hour11" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT1" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour12" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT2" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour13" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT3" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour14" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT4" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour15" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT5" class="ref-dt" readonly placeholder="0">
-                </div>
-
-                <div class="ref-box">
-                    <input id="Hour16" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT6" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour17" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT7" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour18" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT8" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour19" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT9" class="ref-dt" readonly placeholder="0">
-                </div>
-                <div class="ref-box">
-                    <input id="Hour20" class="ref-time" readonly>
-                    <div class="ref-separator"></div>
-                    <input id="DT10" class="ref-dt" readonly placeholder="0">
-                </div>
-            </div>
-        </div>
-
-        <div class="group-box">
-            <h4>⚙️ Input Detail Downtime</h4>
-            <div id="dynamic-downtime-container"></div>
-            <div style="text-align: center; margin-top: 10px;">
-                <button type="button" id="AddDowntimeBtn" style="width: 45px; height: 45px; border-radius: 50%; background-color: #0078d4; color: white; font-size: 24px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">+</button>
-            </div>
-        </div>
-
-        <div class="group-box">
-            <h4>📈 Summary Total Loss</h4>
-            <div class="grid-2">
-                <div><label>Tot. UTND</label><input id="Total_UTND" type="text" readonly class="bg-red"></div>
-                <div><label>Tot. CIMOH</label><input id="Total_CIMOH" type="text" readonly class="bg-red"></div>
-                <div><label>Tot. NPT</label><input id="Total_NPT" type="text" readonly class="bg-yellow"></div>
-                <div><label>Tot. PM</label><input id="Total_PM" type="text" readonly class="bg-blue"></div>
-                <div><label>Tot. PS</label><input id="Total_PS" type="text" readonly class="bg-blue"></div>
-                <div><label>Tot. PCO</label><input id="Total_PCO" type="text" readonly class="bg-blue"></div>
-                <div><label>Tot. BM</label><input id="Total_BM" type="text" readonly class="bg-grey"></div>
-                <div><label>Tot. OLPS</label><input id="Total_OLPS" type="text" readonly class="bg-yellow"></div>
-                <div><label>Tot. EQFB</label><input id="Total_EQFB" type="text" readonly class="bg-red"></div>
-                <div><label>Tot. LOG</label><input id="Total_LOG" type="text" readonly class="bg-yellow"></div>
-                <div><label>Tot. PRL</label><input id="Total_PRL" type="text" readonly class="bg-grey"></div>
-                <div><label>Tot. QUAL</label><input id="Total_QUAL" type="text" readonly class="bg-red"></div>
-            </div>
-        </div>
-
-        <button id="SubmitBtn" class="btn-success" style="width: 100%; padding: 15px; font-size: 16px; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            💾 SIMPAN DATA
-        </button>
-        <div style="height: 50px;"></div>
-        <div id="deleteModal" class="modal-overlay">
-            <div class="modal-box">
-                <h3>⚠️ PERINGATAN PENGHAPUSAN</h3>
-                <p>Anda yakin ingin menghapus data dengan ID:</p>
-                <div class="id-display" id="modalIDDisplay"></div>
-                <p style="font-size: 13px; color: #605e5c;">Tindakan ini TIDAK DAPAT dibatalkan!</p>
-                <div class="modal-buttons">
-                    <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">❌ Batal</button>
-                    <button class="modal-btn modal-btn-confirm" onclick="confirmDelete()">🗑️ Ya, Hapus</button>
-                </div>
-            </div>
-        </div>
 </div>
 
 </body>
