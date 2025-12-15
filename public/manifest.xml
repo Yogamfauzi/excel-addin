@@ -7,7 +7,7 @@
           xsi:type="TaskPaneApp">
 
   <Id>c3975ff5-1234-4567-8910-abcdef123456</Id>
-  <Version>1.0.0.4</Version>
+  <Version>1.0.0.5</Version>
   <ProviderName>Yoga IT Developer</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Laporan Produksi Add-in" />
@@ -75,6 +75,22 @@
                   </Action>
                 </Control>
 
+                <Control xsi:type="Button" id="BtnBersihkanData">
+                  <Label resid="BtnBersihkan.Label" />
+                  <Supertip>
+                    <Title resid="BtnBersihkan.Label" />
+                    <Description resid="BtnBersihkan.Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16" />
+                    <bt:Image size="32" resid="Icon.32x32" />
+                    <bt:Image size="80" resid="Icon.80x80" />
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>clearDashboard</FunctionName>
+                  </Action>
+                </Control>
+
               </Group>
               <Label resid="TabLabel" />
             </CustomTab>
@@ -100,11 +116,13 @@
         <bt:String id="TabLabel" DefaultValue="Produksi" />
         <bt:String id="TaskpaneButton.Label" DefaultValue="Form Input" />
         <bt:String id="BtnCari.Label" DefaultValue="Cari &amp; Tampilkan" />
+        <bt:String id="BtnBersihkan.Label" DefaultValue="Bersihkan Oscar" />
       </bt:ShortStrings>
       
       <bt:LongStrings>
         <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Klik untuk membuka form input laporan produksi." />
         <bt:String id="BtnCari.Tooltip" DefaultValue="Membaca ID dari Dashboard dan memuat data terkait." />
+        <bt:String id="BtnBersihkan.Tooltip" DefaultValue="Menghapus isi data pada dashboard (tetap mempertahankan format)." />
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
