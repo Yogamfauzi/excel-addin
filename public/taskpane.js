@@ -56,23 +56,29 @@ function makeAllFieldsEditable() {
     if (input.id && input.id.indexOf("Total_") === 0) {
       input.setAttribute("readonly", "true");
       input["style"].backgroundColor = "#f0f0f0";
-
     } else {
-
       input.removeAttribute("readonly");
       input.removeAttribute("disabled");
     }
   });
 }
 
-function handleDatalistFocus(el) {
-  el.dataset.oldValue = el.value;
-  el.value = "";
+function handleDatalistMouseDown(el) {
+  if (el.value.trim() !== "") {
+    el.dataset.oldValue = el.value;
+    el.placeholder = el.value;
+    el.classList.add('placeholder-mimic');
+    el.value = "";
+  }
 }
 
-function handleDatalistBlur(el) {
-  if (el.value === "") {
-    el.value = el.dataset.oldValue || "";
+function handleDatalistBlur(el, defaultText) {
+  el.classList.remove('placeholder-mimic');
+  el.placeholder = defaultText;
+  if (el.value.trim() === "") {
+    if (el.dataset.oldValue) {
+      el.value = el.dataset.oldValue;
+    }
   }
 }
 
@@ -170,10 +176,11 @@ async function loadMasterData() {
         if (item.key === "targetHead") masterData.targetOEE.header = item.rng.values[0];
       });
 
-      populateDropdown("Supervisor", masterData.supervisor, 0);
-      populateDropdown("Leader", masterData.leader, 0);
-      populateDropdown("Team", masterData.leader, 0);
-      populateDropdown("Shift", masterData.jadwal, 0);
+      // --- PERUBAHAN: Gunakan populateDatalist ke ID Datalist yang baru ---
+      populateDatalist("SupervisorList", masterData.supervisor, 0);
+      populateDatalist("LeaderList", masterData.leader, 0);
+      populateDatalist("TeamList", masterData.leader, 0);
+      populateDatalist("ShiftList", masterData.jadwal, 0);
 
       makeAllFieldsEditable();
     });
@@ -421,23 +428,20 @@ function initializeForm() {
   onTanggalChange();
 }
 
-function populateDropdown(id, data, colIdx) {
-  var select = document.getElementById(id);
-  if (!select) return;
-  select.innerHTML = "";
-  var defaultOpt = document.createElement("option");
-  defaultOpt.value = "";
-  defaultOpt.text = "--Pilih--";
-  select.appendChild(defaultOpt);
-  if (!data) return;
-  data.forEach(function (row) {
-    if (row[colIdx]) {
-      var opt = document.createElement("option");
-      opt.value = row[colIdx];
-      opt.text = row[colIdx];
-      select.appendChild(opt);
-    }
-  });
+function populateDatalist(datalistId, data, colIdx) {
+  var datalist = document.getElementById(datalistId);
+  if (!datalist) return;
+
+  var opts = "";
+  if (data) {
+    data.forEach(function (row) {
+      if (row[colIdx]) {
+        // Buat option string untuk datalist
+        opts += '<option value="' + row[colIdx] + '">' + row[colIdx] + '</option>';
+      }
+    });
+  }
+  datalist.innerHTML = opts;
 }
 
 function onLineChange() {
@@ -445,7 +449,7 @@ function onLineChange() {
   hitungTargetOEE();
   loadHiddenMachineMaps();
   loadRejectMaps();
-  loadMachineByLine(line).then(function () { });
+  loadMachineByLine(line).then(function () {});
 }
 
 function onLeaderChange() {
@@ -783,89 +787,74 @@ function addDowntimeRow(data) {
     statusOpts += '<option value="' + s + '">' + s + "</option>";
   });
 
+  // --- STRING HTML YANG DIPERBARUI (MENGGUNAKAN HANDLER BARU) ---
   var htmlContent =
     '<div style="display:flex; justify-content:space-between; margin-bottom:5px;">' +
-    "<strong>Downtime #" +
-    idx +
-    "</strong>" +
-    '<button type="button" class="btn-danger" style="padding:2px 8px;" onclick="removeDowntimeRow(' +
-    idx +
-    ')">X</button>' +
+    "<strong>Downtime #" + idx + "</strong>" +
+    '<button type="button" class="btn-danger" style="padding:2px 8px;" onclick="removeDowntimeRow(' + idx + ')">X</button>' +
     "</div>" +
+
     '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">' +
+
+    // CATEGORY
     "<div><label>Category:</label>" +
-    '<input list="CategoryList' +
-    idx +
-    '" id="Category' +
-    idx +
-    '" class="d-input" style="width:100%" placeholder="Pilih Category" onfocus="handleDatalistFocus(this)" onblur="handleDatalistBlur(this)">' +
-    '<datalist id="CategoryList' +
-    idx +
-    '">' +
-    catOpts +
-    "</datalist>" +
+    '<input list="CategoryList' + idx + '" id="Category' + idx + '" class="d-input" style="width:100%" ' +
+    'placeholder="--Pilih Category--" ' +
+    'onmousedown="handleDatalistMouseDown(this)" ' +
+    'onblur="handleDatalistBlur(this, \'--Pilih Category--\')">' +
+    '<datalist id="CategoryList' + idx + '">' + catOpts + "</datalist>" +
     "</div>" +
+
+    // MACHINE
     "<div><label>Machine:</label>" +
-    '<input list="machineList' +
-    idx +
-    '" id="Machine' +
-    idx +
-    '" class="d-input" style="width:100%" placeholder="Pilih Mesin" onchange="updateDescriptionOptions(' +
-    idx +
-    ')" onfocus="handleDatalistFocus(this)" onblur="handleDatalistBlur(this)">' +
-    '<datalist id="machineList' +
-    idx +
-    '">' +
-    machineOpts +
-    "</datalist>" +
+    '<input list="machineList' + idx + '" id="Machine' + idx + '" class="d-input" style="width:100%" ' +
+    'placeholder="--Pilih Mesin--" ' +
+    'onmousedown="handleDatalistMouseDown(this)" ' +
+    'onblur="handleDatalistBlur(this, \'--Pilih Mesin--\')" ' +
+    'onchange="updateDescriptionOptions(' + idx + ')">' +
+    '<datalist id="machineList' + idx + '">' + machineOpts + "</datalist>" +
     "</div>" +
+
+    // DESCRIPTION
     '<div style="grid-column: span 2;"><label>Description:</label>' +
-    '<input list="descList' +
-    idx +
-    '" id="Description' +
-    idx +
-    '" class="d-input" style="width:100%" placeholder="Pilih Deskripsi" onfocus="handleDatalistFocus(this)" onblur="handleDatalistBlur(this)">' +
-    '<datalist id="descList' +
-    idx +
-    '"></datalist>' +
+    '<input list="descList' + idx + '" id="Description' + idx + '" class="d-input" style="width:100%" ' +
+    'placeholder="--Pilih/Ketik Deskripsi--" ' +
+    'onmousedown="handleDatalistMouseDown(this)" ' +
+    'onblur="handleDatalistBlur(this, \'--Pilih/Ketik Deskripsi--\')">' +
+    '<datalist id="descList' + idx + '"></datalist>' +
     "</div>" +
+
+    // ACTION
     '<div style="grid-column: span 2;"><label>Action:</label>' +
-    '<input id="Action' +
-    idx +
-    '" type="text" class="d-input" style="width:100%" placeholder="Isi Action yang dilakukan...">' +
+    '<input id="Action' + idx + '" type="text" class="d-input" style="width:100%" placeholder="Isi Action yang dilakukan...">' +
     "</div>" +
+
+    // START JAM (AUTO FORMAT)
     "<div><label>Start (Jam):</label>" +
-    '<input id="JamStart' +
-    idx +
-    '" type="time" class="d-input" style="width:100%">' +
+    '<input id="JamStart' + idx + '" type="text" maxlength="5" placeholder="HH:MM" class="d-input" style="width:100%" data-time-input="true">' +
     "</div>" +
-    '<div><label>Durasi (Menit):</label><input id="Durasi' +
-    idx +
-    '" type="number" min="0" class="d-input" style="width:100%"></div>' +
+
+    // DURASI
+    '<div><label>Durasi (Menit):</label><input id="Durasi' + idx + '" type="number" min="0" class="d-input" style="width:100%"></div>' +
+
+    // PIC
     "<div><label>PIC:</label>" +
-    '<input list="PicList' +
-    idx +
-    '" id="Pic' +
-    idx +
-    '" class="d-input" style="width:100%" placeholder="Pilih PIC" onfocus="handleDatalistFocus(this)" onblur="handleDatalistBlur(this)">' +
-    '<datalist id="PicList' +
-    idx +
-    '">' +
-    picOpts +
-    "</datalist>" +
+    '<input list="PicList' + idx + '" id="Pic' + idx + '" class="d-input" style="width:100%" ' +
+    'placeholder="--Pilih PIC--" ' +
+    'onmousedown="handleDatalistMouseDown(this)" ' +
+    'onblur="handleDatalistBlur(this, \'--Pilih PIC--\')">' +
+    '<datalist id="PicList' + idx + '">' + picOpts + "</datalist>" +
     "</div>" +
+
+    // STATUS
     "<div><label>Status:</label>" +
-    '<input list="StatusList' +
-    idx +
-    '" id="Status' +
-    idx +
-    '" class="d-input" style="width:100%" placeholder="Pilih Status" onfocus="handleDatalistFocus(this)" onblur="handleDatalistBlur(this)">' +
-    '<datalist id="StatusList' +
-    idx +
-    '">' +
-    statusOpts +
-    "</datalist>" +
+    '<input list="StatusList' + idx + '" id="Status' + idx + '" class="d-input" style="width:100%" ' +
+    'placeholder="--Pilih Status--" ' +
+    'onmousedown="handleDatalistMouseDown(this)" ' +
+    'onblur="handleDatalistBlur(this, \'--Pilih Status--\')">' +
+    '<datalist id="StatusList' + idx + '">' + statusOpts + "</datalist>" +
     "</div>" +
+
     "</div>";
 
   rowDiv.innerHTML = htmlContent;
@@ -892,6 +881,7 @@ function addDowntimeRow(data) {
   setupDynamicTimeInputs();
   setupKeyboardNavigation();
 }
+
 function removeDowntimeRow(idx) {
   var row = document.getElementById("DowntimeRow_" + idx);
   if (row) {
@@ -1467,7 +1457,9 @@ async function handleSubmit() {
         var downtimeGroups = {};
 
         for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-          var cat = getValue("Category" + i).trim().toUpperCase();
+          var cat = getValue("Category" + i)
+            .trim()
+            .toUpperCase();
           var mach = getValue("Machine" + i).trim();
           var desc = getValueOrNone("Description" + i);
           if (desc === "NONE") desc = "";
@@ -1483,21 +1475,28 @@ async function handleSubmit() {
         var priorityKeys = ["TEMUAN ABNORMALITY", "ISSUE SAFETY", "ISSUE QUALITY"];
         function formatBlock(catName, group) {
           var blk = catName + " (Total " + group.total + " Menit)\n";
-          group.items.forEach(function (item, idx) { blk += "    " + (idx + 1) + ". " + item + "\n"; });
+          group.items.forEach(function (item, idx) {
+            blk += "    " + (idx + 1) + ". " + item + "\n";
+          });
           blk += "\n";
           return blk;
         }
         priorityKeys.forEach(function (key) {
-          if (downtimeGroups[key]) { noteResult += formatBlock(key, downtimeGroups[key]); delete downtimeGroups[key]; }
+          if (downtimeGroups[key]) {
+            noteResult += formatBlock(key, downtimeGroups[key]);
+            delete downtimeGroups[key];
+          }
         });
-        for (var key in downtimeGroups) { noteResult += formatBlock(key, downtimeGroups[key]); }
+        for (var key in downtimeGroups) {
+          noteResult += formatBlock(key, downtimeGroups[key]);
+        }
 
         var oeePct = (Number(oeeResult) * 100).toFixed(2);
         var targetPct = (targetOEEVal * 100).toFixed(2);
 
-        var statusOEE = (parseFloat(oeePct) >= parseFloat(targetPct)) ? "Tercapai" : "Tidak Tercapai";
+        var statusOEE = parseFloat(oeePct) >= parseFloat(targetPct) ? "Tercapai" : "Tidak Tercapai";
         var selisih = Math.abs(parseFloat(oeePct) - parseFloat(targetPct)).toFixed(2);
-        var ketSelisih = (parseFloat(oeePct) >= parseFloat(targetPct)) ? "Lebih" : "Kurang";
+        var ketSelisih = parseFloat(oeePct) >= parseFloat(targetPct) ? "Lebih" : "Kurang";
 
         var footer = "\n---\n";
         footer += "Pencapaian OEE : " + oeePct + "%\n";
@@ -1545,7 +1544,7 @@ async function handleSubmit() {
         masterData.categoryMapping.forEach(function (cat) {
           for (var v = 1; v <= 13; v++) {
             var valDetail = getValue(cat.short + v);
-            dataDetail[cat.short + v] = (valDetail === "" || valDetail === null) ? 0 : valDetail;
+            dataDetail[cat.short + v] = valDetail === "" || valDetail === null ? 0 : valDetail;
           }
         });
       }
@@ -1838,7 +1837,6 @@ function handleKeyNavigation(e) {
       focusNextInput(target);
     }
     e.preventDefault();
-
   } else if (e.key === "ArrowUp") {
     var success = attemptVerticalNavigation(target, -1);
 
@@ -1865,14 +1863,14 @@ function attemptVerticalNavigation(currentElement, direction) {
     var nextEl = document.getElementById(nextId);
 
     if (nextEl) {
-      if (typeof nextEl['focus'] === 'function') {
-        nextEl['focus']();
+      if (typeof nextEl["focus"] === "function") {
+        nextEl["focus"]();
       }
 
       if (nextEl.tagName === "INPUT" || nextEl.tagName === "TEXTAREA") {
         setTimeout(function () {
-          if (typeof nextEl['select'] === 'function') {
-            nextEl['select']();
+          if (typeof nextEl["select"] === "function") {
+            nextEl["select"]();
           }
         }, 10);
       }
@@ -1883,7 +1881,9 @@ function attemptVerticalNavigation(currentElement, direction) {
 }
 
 function focusNextInput(currentElement) {
-  var allNodeList = document.querySelectorAll("input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])");
+  var allNodeList = document.querySelectorAll(
+    "input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])",
+  );
   var allInputs = [];
 
   for (var i = 0; i < allNodeList.length; i++) {
@@ -1900,14 +1900,14 @@ function focusNextInput(currentElement) {
   if (nextIndex < allInputs.length) {
     var nextEl = allInputs[nextIndex];
 
-    if (typeof nextEl['focus'] === 'function') {
-      nextEl['focus']();
+    if (typeof nextEl["focus"] === "function") {
+      nextEl["focus"]();
     }
 
     if (nextEl.tagName === "INPUT" || nextEl.tagName === "TEXTAREA") {
       setTimeout(function () {
-        if (typeof nextEl['select'] === 'function') {
-          nextEl['select']();
+        if (typeof nextEl["select"] === "function") {
+          nextEl["select"]();
         }
       }, 10);
     }
@@ -1915,7 +1915,9 @@ function focusNextInput(currentElement) {
 }
 
 function focusPreviousInput(currentElement) {
-  var allNodeList = document.querySelectorAll("input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])");
+  var allNodeList = document.querySelectorAll(
+    "input:not([type='hidden']):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])",
+  );
   var allInputs = [];
 
   for (var i = 0; i < allNodeList.length; i++) {
@@ -1932,14 +1934,14 @@ function focusPreviousInput(currentElement) {
   if (prevIndex >= 0) {
     var prevEl = allInputs[prevIndex];
 
-    if (typeof prevEl['focus'] === 'function') {
-      prevEl['focus']();
+    if (typeof prevEl["focus"] === "function") {
+      prevEl["focus"]();
     }
 
     if (prevEl.tagName === "INPUT" || prevEl.tagName === "TEXTAREA") {
       setTimeout(function () {
-        if (typeof prevEl['select'] === 'function') {
-          prevEl['select']();
+        if (typeof prevEl["select"] === "function") {
+          prevEl["select"]();
         }
       }, 10);
     }
@@ -1947,25 +1949,22 @@ function focusPreviousInput(currentElement) {
 }
 
 function setupTimeInputAutoFormat() {
-  var timeInputIds = [
-    'StartProduction',
-    'EndProduction'
-  ];
+  var timeInputIds = ["StartProduction", "EndProduction"];
 
   timeInputIds.forEach(function (id) {
     var el = document.getElementById(id);
 
     if (el) {
       // GUNAKAN KURUNG SIKU AGAR TIDAK ERROR DI EDITOR
-      el['type'] = 'text';
-      el['maxLength'] = 5;
-      el['placeholder'] = 'HH:MM';
-      el.setAttribute('data-time-input', 'true');
+      el["type"] = "text";
+      el["maxLength"] = 5;
+      el["placeholder"] = "HH:MM";
+      el.setAttribute("data-time-input", "true");
 
-      el.addEventListener('input', handleTimeInput);
-      el.addEventListener('keydown', handleTimeKeydown);
-      el.addEventListener('blur', handleTimeBlur);
-      el.addEventListener('paste', handleTimePaste);
+      el.addEventListener("input", handleTimeInput);
+      el.addEventListener("keydown", handleTimeKeydown);
+      el.addEventListener("blur", handleTimeBlur);
+      el.addEventListener("paste", handleTimePaste);
     }
   });
 
@@ -1974,19 +1973,19 @@ function setupTimeInputAutoFormat() {
 
 function setupDynamicTimeInputs() {
   for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-    var el = document.getElementById('JamStart' + i);
+    var el = document.getElementById("JamStart" + i);
 
-    if (el && !el.getAttribute('data-time-input')) {
+    if (el && !el.getAttribute("data-time-input")) {
       // GUNAKAN KURUNG SIKU AGAR TIDAK ERROR DI EDITOR
-      el['type'] = 'text';
-      el['maxLength'] = 5;
-      el['placeholder'] = 'HH:MM';
-      el.setAttribute('data-time-input', 'true');
+      el["type"] = "text";
+      el["maxLength"] = 5;
+      el["placeholder"] = "HH:MM";
+      el.setAttribute("data-time-input", "true");
 
-      el.addEventListener('input', handleTimeInput);
-      el.addEventListener('keydown', handleTimeKeydown);
-      el.addEventListener('blur', handleTimeBlur);
-      el.addEventListener('paste', handleTimePaste);
+      el.addEventListener("input", handleTimeInput);
+      el.addEventListener("keydown", handleTimeKeydown);
+      el.addEventListener("blur", handleTimeBlur);
+      el.addEventListener("paste", handleTimePaste);
     }
   }
 }
@@ -1995,19 +1994,19 @@ function handleTimeInput(e) {
   var input = e.target;
   var value = input.value;
 
-  var numbers = value.replace(/\D/g, '');
+  var numbers = value.replace(/\D/g, "");
 
   if (numbers.length > 4) {
     numbers = numbers.substring(0, 4);
   }
 
-  var formatted = '';
+  var formatted = "";
 
   if (numbers.length > 0) {
     var hours = numbers.substring(0, 2);
 
     if (parseInt(hours) > 23) {
-      hours = '23';
+      hours = "23";
     }
 
     formatted = hours;
@@ -2016,17 +2015,17 @@ function handleTimeInput(e) {
       var minutes = numbers.substring(2, 4);
 
       if (parseInt(minutes) > 59) {
-        minutes = '59';
+        minutes = "59";
       }
 
-      formatted += ':' + minutes;
+      formatted += ":" + minutes;
     }
   }
 
   input.value = formatted;
 
   if (formatted.length === 5) {
-    var event = new Event('change', { bubbles: true });
+    var event = new Event("change", { bubbles: true });
     input.dispatchEvent(event);
   }
 }
@@ -2035,23 +2034,24 @@ function handleTimeKeydown(e) {
   var input = e.target;
   var key = e.key;
 
-  if ([
-    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
-  ].indexOf(key) !== -1) {
+  if (
+    ["Backspace", "Delete", "Tab", "Escape", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].indexOf(
+      key,
+    ) !== -1
+  ) {
     return;
   }
 
-  if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].indexOf(key.toLowerCase()) !== -1) {
+  if ((e.ctrlKey || e.metaKey) && ["a", "c", "v", "x"].indexOf(key.toLowerCase()) !== -1) {
     return;
   }
 
-  if (key < '0' || key > '9') {
+  if (key < "0" || key > "9") {
     e.preventDefault();
     return;
   }
 
-  var value = input.value.replace(/\D/g, '');
+  var value = input.value.replace(/\D/g, "");
   if (value.length >= 4) {
     e.preventDefault();
   }
@@ -2063,26 +2063,26 @@ function handleTimeBlur(e) {
 
   if (!value) return;
 
-  var numbers = value.replace(/\D/g, '');
+  var numbers = value.replace(/\D/g, "");
 
   if (numbers.length === 1) {
-    numbers = '0' + numbers + '00';
+    numbers = "0" + numbers + "00";
   } else if (numbers.length === 2) {
-    numbers = numbers + '00';
+    numbers = numbers + "00";
   } else if (numbers.length === 3) {
-    numbers = '0' + numbers;
+    numbers = "0" + numbers;
   }
 
   if (numbers.length >= 4) {
     var hours = numbers.substring(0, 2);
     var minutes = numbers.substring(2, 4);
 
-    if (parseInt(hours) > 23) hours = '23';
-    if (parseInt(minutes) > 59) minutes = '59';
+    if (parseInt(hours) > 23) hours = "23";
+    if (parseInt(minutes) > 59) minutes = "59";
 
-    input.value = hours + ':' + minutes;
+    input.value = hours + ":" + minutes;
 
-    var event = new Event('change', { bubbles: true });
+    var event = new Event("change", { bubbles: true });
     input.dispatchEvent(event);
   }
 }
@@ -2093,24 +2093,24 @@ function handleTimePaste(e) {
   var input = e.target;
 
   // GUNAKAN KURUNG SIKU UNTUK CLIPBOARD DATA JUGA
-  var clipboardData = (e['clipboardData'] || window['clipboardData']);
-  var pastedText = clipboardData ? clipboardData.getData('text') : '';
+  var clipboardData = e["clipboardData"] || window["clipboardData"];
+  var pastedText = clipboardData ? clipboardData.getData("text") : "";
 
-  var numbers = pastedText.replace(/\D/g, '');
+  var numbers = pastedText.replace(/\D/g, "");
 
   if (numbers.length >= 3) {
     var hours = numbers.substring(0, 2);
     var minutes = numbers.substring(2, 4);
 
-    if (parseInt(hours) > 23) hours = '23';
-    if (parseInt(minutes) > 59) minutes = '59';
+    if (parseInt(hours) > 23) hours = "23";
+    if (parseInt(minutes) > 59) minutes = "59";
 
-    input['value'] = hours + ':' + minutes;
+    input["value"] = hours + ":" + minutes;
 
-    var event = new Event('change', { bubbles: true });
+    var event = new Event("change", { bubbles: true });
     input.dispatchEvent(event);
   } else {
-    input['value'] = numbers;
+    input["value"] = numbers;
   }
 }
 
@@ -2122,20 +2122,20 @@ function isValidTimeFormat(timeStr) {
 }
 
 function normalizeTimeInput(input) {
-  if (!input) return '';
+  if (!input) return "";
 
-  var numbers = String(input).replace(/\D/g, '');
+  var numbers = String(input).replace(/\D/g, "");
 
-  if (numbers.length === 0) return '';
-  if (numbers.length === 1) numbers = '0' + numbers + '00';
-  if (numbers.length === 2) numbers = numbers + '00';
-  if (numbers.length === 3) numbers = '0' + numbers;
+  if (numbers.length === 0) return "";
+  if (numbers.length === 1) numbers = "0" + numbers + "00";
+  if (numbers.length === 2) numbers = numbers + "00";
+  if (numbers.length === 3) numbers = "0" + numbers;
 
   var hours = numbers.substring(0, 2);
   var minutes = numbers.substring(2, 4);
 
-  if (parseInt(hours) > 23) hours = '23';
-  if (parseInt(minutes) > 59) minutes = '59';
+  if (parseInt(hours) > 23) hours = "23";
+  if (parseInt(minutes) > 59) minutes = "59";
 
-  return hours + ':' + minutes;
+  return hours + ":" + minutes;
 }

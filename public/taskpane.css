@@ -415,3 +415,9 @@ th {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+.placeholder-mimic::placeholder {
+    color: #323130 !important; /* Warna teks standar */
+    opacity: 1 !important;      /* Fix untuk Firefox */
+    font-weight: 400;
+}
