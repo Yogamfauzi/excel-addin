@@ -64,21 +64,12 @@ function makeAllFieldsEditable() {
 }
 
 function handleDatalistMouseDown(el) {
-  if (el.value.trim() !== "") {
-    el.dataset.oldValue = el.value;
-    el.placeholder = el.value;
-    el.classList.add("placeholder-mimic");
-    el.value = "";
-  }
+
 }
 
 function handleDatalistBlur(el, defaultText) {
-  el.classList.remove("placeholder-mimic");
-  el.placeholder = defaultText;
   if (el.value.trim() === "") {
-    if (el.dataset.oldValue) {
-      el.value = el.dataset.oldValue;
-    }
+    el.placeholder = defaultText;
   }
 }
 
@@ -176,7 +167,6 @@ async function loadMasterData() {
         if (item.key === "targetHead") masterData.targetOEE.header = item.rng.values[0];
       });
 
-      // --- PERUBAHAN: Gunakan populateDatalist ke ID Datalist yang baru ---
       populateDatalist("SupervisorList", masterData.supervisor, 0);
       populateDatalist("LeaderList", masterData.leader, 0);
       populateDatalist("TeamList", masterData.leader, 0);
@@ -245,7 +235,7 @@ async function loadMachineByLine(line) {
           });
         }
       });
-      // Refresh dropdown setelah deskripsi terisi
+
       refreshDowntimeDropdowns();
     });
   } catch (e) { console.error(e); }
@@ -316,16 +306,8 @@ function updateDescriptionOptions(rowIdx) {
     var cleanDbName = dbMachineName.trim().toUpperCase();
     var isMatch = false;
 
-    if (cleanDbName === selectedMachine) {
+    if (cleanDbName.indexOf(selectedMachine) > -1 || selectedMachine.indexOf(cleanDbName) > -1) {
       isMatch = true;
-    } else if (cleanDbName.indexOf("/") > -1) {
-      var parts = cleanDbName.split("/");
-      for (var p = 0; p < parts.length; p++) {
-        if (parts[p].trim() === selectedMachine) {
-          isMatch = true;
-          break;
-        }
-      }
     }
 
     if (isMatch) {
@@ -460,6 +442,10 @@ function initializeForm() {
   var year = d.getFullYear();
   setValue("Tanggal", year + "-" + month + "-" + day);
   onTanggalChange();
+
+  if (getValue("Line")) {
+    onLineChange();
+  }
 }
 
 function populateDatalist(datalistId, data, colIdx) {
@@ -470,7 +456,6 @@ function populateDatalist(datalistId, data, colIdx) {
   if (data) {
     data.forEach(function (row) {
       if (row[colIdx]) {
-        // Buat option string untuk datalist
         opts += '<option value="' + row[colIdx] + '">' + row[colIdx] + "</option>";
       }
     });
@@ -780,18 +765,23 @@ function addDowntimeRow(data) {
       break;
     }
   }
-  if (idx === -1) return;
+  if (idx === -1) {
+    showNotification("Maksimal baris downtime tercapai!", "error");
+    return;
+  }
 
   var container = document.getElementById("dynamic-downtime-container");
   var rowDiv = document.createElement("div");
   rowDiv.id = "DowntimeRow_" + idx;
   rowDiv.style.cssText = "border:1px solid #ccc; padding:10px; margin-bottom:10px; background:#fff;";
 
-  // Buat HTML dengan datalist kosong (akan diisi oleh refreshDowntimeDropdowns)
   rowDiv.innerHTML = `
-    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
       <strong>Downtime #${idx}</strong>
-      <button type="button" class="btn-danger" style="padding:2px 8px;" onclick="removeDowntimeRow(${idx})">X</button>
+      <div>
+        <button type="button" class="btn-primary" style="padding:2px 8px; margin-right:5px; background-color:#0078d4; color:white; border:none; cursor:pointer;" onclick="copyDowntimeRow(${idx})" title="Salin Baris Ini">Salin</button>
+        <button type="button" class="btn-danger" style="padding:2px 8px; background-color:#a4262c; color:white; border:none; cursor:pointer;" onclick="removeDowntimeRow(${idx})" title="Hapus Baris Ini">X</button>
+      </div>
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <div><label>Category:</label>
@@ -828,14 +818,12 @@ function addDowntimeRow(data) {
 
   container.appendChild(rowDiv);
 
-  // Pasang event listener agregasi
   var inputs = rowDiv.querySelectorAll(".d-input");
   inputs.forEach(input => {
     input.addEventListener("change", hitungAgregasi);
     input.addEventListener("input", hitungAgregasi);
   });
 
-  // Isi data jika sedang edit mode
   if (data) {
     setValue("Category" + idx, data.Category || "");
     setValue("Machine" + idx, data.Machine || "");
@@ -848,10 +836,11 @@ function addDowntimeRow(data) {
     setValue("JamStart" + idx, normalizeTimeInput(data.JamStart || ""));
   }
 
-  // Isi dropdown untuk baris baru ini
   refreshDowntimeDropdowns();
   setupDynamicTimeInputs();
   setupKeyboardNavigation();
+
+  if (data) hitungAgregasi();
 }
 
 function removeDowntimeRow(idx) {
@@ -861,6 +850,23 @@ function removeDowntimeRow(idx) {
     hitungAgregasi();
   }
 }
+
+function copyDowntimeRow(sourceIdx) {
+  var data = {
+    Category: getValue("Category" + sourceIdx),
+    Machine: getValue("Machine" + sourceIdx),
+    Description: getValue("Description" + sourceIdx),
+    Action: getValue("Action" + sourceIdx),
+    Durasi: getValue("Durasi" + sourceIdx),
+    JamStart: getValue("JamStart" + sourceIdx),
+    Pic: getValue("Pic" + sourceIdx),
+    Status: getValue("Status" + sourceIdx)
+  };
+
+  addDowntimeRow(data);
+  showNotification("Baris #" + sourceIdx + " berhasil disalin!", "success");
+}
+
 function getCategoryPrefix(catInput) {
   if (!catInput) return "";
   var cleanCat = catInput.trim().toUpperCase();
@@ -1279,8 +1285,16 @@ async function loadChildData(context, id) {
 async function handleSubmit() {
   var valLine = getValue("Line");
   var valDate = getValue("Tanggal");
+  var sProd = getValue("StartProduction");
+  var eProd = getValue("EndProduction");
+
   if (!valLine || !valDate) {
     showNotification("Line dan Tanggal harus diisi!", "error");
+    return;
+  }
+
+  if (sProd.length !== 5 || eProd.length !== 5) {
+    showNotification("Format Jam Start/Finish salah! Harus HH:MM (Contoh: 07:00)", "error");
     return;
   }
 
@@ -1308,12 +1322,14 @@ async function handleSubmit() {
       var saveID = isEditMode ? currentID : generateUniqueID();
       var rawDate = getValue("Tanggal");
       var strDate = convertDateInputToExcel(rawDate);
-      var rawDateMasak = getValue("TanggalMasak");
 
-      var parts = strDate.split("-");
-      var dVal = parts[0];
-      var mVal = parts[1];
-      var yVal = parts[2];
+      var rawParts = rawDate.split("-");
+      var justDay = rawParts[2];
+
+      var rawDateMasak = getValue("TanggalMasak");
+      var dVal = rawParts[2];
+      var mVal = rawParts[1];
+      var yVal = rawParts[0];
 
       var targetOEEVal = parseFloat(getValue("TargetOEE").replace("%", "")) || 0;
       if (targetOEEVal > 1) targetOEEVal = targetOEEVal / 100;
@@ -1325,6 +1341,7 @@ async function handleSubmit() {
       var dataMain = {
         Source: saveID,
         Date: strDate,
+        "Date(0)": justDay,
         Shift: getValueOrNone("Shift"),
         Line: getValueOrNone("Line"),
         Leader: getValueOrNone("Leader"),
@@ -1382,34 +1399,33 @@ async function handleSubmit() {
       }
 
       var sheetMain = context.workbook.worksheets.getItemOrNullObject("Input Shiftly");
-      await context.sync();
-      if (sheetMain.isNullObject) return;
-      var tblMain = sheetMain.tables.getItemOrNullObject("TableLaporanAkhir");
-      await context.sync();
-      if (tblMain.isNullObject) return;
-      var colMain = tblMain.columns.load("items/name");
-
       var sheetDown = context.workbook.worksheets.getItemOrNullObject("Input Downtime");
+      await context.sync();
+
+      if (sheetMain.isNullObject) throw new Error("Sheet 'Input Shiftly' tidak ditemukan!");
+      if (sheetDown.isNullObject) throw new Error("Sheet 'Input Downtime' tidak ditemukan!");
+
+      var tblMain = sheetMain.tables.getItemOrNullObject("TableLaporanAkhir");
       var tblDowntime = sheetDown.tables.getItemOrNullObject("DowntimeTable");
       var tblDetailDT = sheetDown.tables.getItemOrNullObject("DetailDowntimeTable");
       var tblReject = sheetDown.tables.getItemOrNullObject("IsiRejectTable");
+
+      await context.sync();
+      if (tblMain.isNullObject) throw new Error("Tabel 'TableLaporanAkhir' tidak ditemukan!");
+
+      var colMain = tblMain.columns.load("items/name");
       var colDT = tblDowntime.columns.load("items/name");
       var colDetail = tblDetailDT.columns.load("items/name");
       var colReject = tblReject.columns.load("items/name");
       await context.sync();
 
       var rowMainArray = mapDataToRow(colMain, dataMain);
-
       if (isEditMode) await deleteRowByID(context, tblMain, saveID);
-
       tblMain.rows.add(null, [rowMainArray]);
 
       await context.sync();
 
-      var idxOEE = -1;
-      var idxCatatan = -1;
-      var idxSource = -1;
-
+      var idxOEE = -1, idxCatatan = -1, idxSource = -1;
       for (var c = 0; c < colMain.items.length; c++) {
         var cName = colMain.items[c].name.toUpperCase();
         if (cName === "OEE") idxOEE = c;
@@ -1420,10 +1436,8 @@ async function handleSubmit() {
       if (idxOEE !== -1 && idxCatatan !== -1 && idxSource !== -1) {
         var bodyRange = tblMain.getDataBodyRange().load("values");
         await context.sync();
-
         var rowIndex = -1;
         var oeeResult = 0;
-
         for (var r = 0; r < bodyRange.values.length; r++) {
           if (bodyRange.values[r][idxSource] === saveID) {
             rowIndex = r;
@@ -1432,60 +1446,14 @@ async function handleSubmit() {
           }
         }
 
-        var noteResult = "";
-        var downtimeGroups = {};
+        if (rowIndex !== -1) {
+          var currentNote = generateCatatanLogic();
+          if (currentNote.length > 32000) currentNote = currentNote.substring(0, 32000) + "...";
 
-        for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-          var cat = getValue("Category" + i)
-            .trim()
-            .toUpperCase();
-          var mach = getValue("Machine" + i).trim();
-          var desc = getValueOrNone("Description" + i);
-          if (desc === "NONE") desc = "";
-          var dur = parseFloat(getValue("Durasi" + i)) || 0;
-
-          if (mach && dur > 0) {
-            if (!downtimeGroups[cat]) downtimeGroups[cat] = { total: 0, items: [] };
-            downtimeGroups[cat].total += dur;
-            downtimeGroups[cat].items.push(mach + ": " + desc);
-          }
+          var cellCatatan = tblMain.getDataBodyRange().getCell(rowIndex, idxCatatan);
+          cellCatatan.values = [[currentNote]];
+          cellCatatan.format.wrapText = false;
         }
-
-        var priorityKeys = ["TEMUAN ABNORMALITY", "ISSUE SAFETY", "ISSUE QUALITY"];
-        function formatBlock(catName, group) {
-          var blk = catName + " (Total " + group.total + " Menit)\n";
-          group.items.forEach(function (item, idx) {
-            blk += "    " + (idx + 1) + ". " + item + "\n";
-          });
-          blk += "\n";
-          return blk;
-        }
-        priorityKeys.forEach(function (key) {
-          if (downtimeGroups[key]) {
-            noteResult += formatBlock(key, downtimeGroups[key]);
-            delete downtimeGroups[key];
-          }
-        });
-        for (var key in downtimeGroups) {
-          noteResult += formatBlock(key, downtimeGroups[key]);
-        }
-
-        var oeePct = (Number(oeeResult) * 100).toFixed(2);
-        var targetPct = (targetOEEVal * 100).toFixed(2);
-
-        var statusOEE = parseFloat(oeePct) >= parseFloat(targetPct) ? "Tercapai" : "Tidak Tercapai";
-        var selisih = Math.abs(parseFloat(oeePct) - parseFloat(targetPct)).toFixed(2);
-        var ketSelisih = parseFloat(oeePct) >= parseFloat(targetPct) ? "Lebih" : "Kurang";
-
-        var footer = "\n---\n";
-        footer += "Pencapaian OEE : " + oeePct + "%\n";
-        footer += "Target OEE : " + targetPct + "% " + ketSelisih + " " + selisih + "% " + statusOEE;
-
-        var finalNote = noteResult + footer;
-
-        var cellCatatan = tblMain.getDataBodyRange().getCell(rowIndex, idxCatatan);
-        cellCatatan.values = [[finalNote]];
-        cellCatatan.format.wrapText = false;
       }
 
       if (isEditMode) await deleteRowByID(context, tblDowntime, saveID);
@@ -1541,18 +1509,25 @@ async function handleSubmit() {
       tblReject.rows.add(null, [rowRejectArray]);
 
       await context.sync();
-      showNotification(isEditMode ? "Data berhasil diperbarui!" : "Data berhasil disimpan!", "success");
 
+      showNotification(isEditMode ? "Data berhasil diperbarui!" : "Data berhasil disimpan!", "success");
       isEditMode = false;
       currentID = "";
+      setTimeout(function () { location.reload(); }, 2000);
 
-      setTimeout(function () {
-        location.reload();
-      }, 2000);
     });
   } catch (error) {
     console.error(error);
-    showNotification("Gagal menyimpan data: " + error.message, "error");
+    var msg = error.message;
+    if (error.code === "InvalidArgument") {
+      msg = "ERROR KOLOM EXCEL! Jumlah kolom di coding tidak sama dengan di Excel. Cek apakah ada kolom baru/hilang di Tabel Excel.";
+    } else if (msg.indexOf("Sheet") > -1) {
+      msg = "ERROR SHEET: " + msg;
+    } else {
+      msg = "Gagal Menyimpan: " + msg;
+    }
+
+    showNotification(msg, "error");
   } finally {
     if (btn) {
       btn["innerText"] = "💾 SIMPAN DATA";
@@ -1560,19 +1535,24 @@ async function handleSubmit() {
     }
   }
 }
+
 function mapDataToRow(excelColumns, dataObject) {
   var rowArray = [];
-  for (var i = 0; i < excelColumns.items.length; i++) {
-    rowArray.push(null);
-  }
-  for (var j = 0; j < excelColumns.items.length; j++) {
+  var colCount = excelColumns.items.length;
+
+  for (var j = 0; j < colCount; j++) {
     var colName = excelColumns.items[j].name;
+
     if (dataObject.hasOwnProperty(colName)) {
-      rowArray[j] = dataObject[colName];
+      var value = dataObject[colName];
+      rowArray.push(value === undefined ? null : value);
+    } else {
+      rowArray.push(null);
     }
   }
   return rowArray;
 }
+
 var pendingDeleteID = "";
 
 async function handleDelete() {
@@ -1934,7 +1914,6 @@ function setupTimeInputAutoFormat() {
     var el = document.getElementById(id);
 
     if (el) {
-      // GUNAKAN KURUNG SIKU AGAR TIDAK ERROR DI EDITOR
       el["type"] = "text";
       el["maxLength"] = 5;
       el["placeholder"] = "HH:MM";
@@ -1955,7 +1934,6 @@ function setupDynamicTimeInputs() {
     var el = document.getElementById("JamStart" + i);
 
     if (el && !el.getAttribute("data-time-input")) {
-      // GUNAKAN KURUNG SIKU AGAR TIDAK ERROR DI EDITOR
       el["type"] = "text";
       el["maxLength"] = 5;
       el["placeholder"] = "HH:MM";
@@ -2071,7 +2049,6 @@ function handleTimePaste(e) {
 
   var input = e.target;
 
-  // GUNAKAN KURUNG SIKU UNTUK CLIPBOARD DATA JUGA
   var clipboardData = e["clipboardData"] || window["clipboardData"];
   var pastedText = clipboardData ? clipboardData.getData("text") : "";
 
@@ -2118,4 +2095,3 @@ function normalizeTimeInput(input) {
 
   return hours + ":" + minutes;
 }
-
