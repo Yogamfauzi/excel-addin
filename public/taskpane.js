@@ -67,13 +67,13 @@ function handleDatalistMouseDown(el) {
   if (el.value.trim() !== "") {
     el.dataset.oldValue = el.value;
     el.placeholder = el.value;
-    el.classList.add('placeholder-mimic');
+    el.classList.add("placeholder-mimic");
     el.value = "";
   }
 }
 
 function handleDatalistBlur(el, defaultText) {
-  el.classList.remove('placeholder-mimic');
+  el.classList.remove("placeholder-mimic");
   el.placeholder = defaultText;
   if (el.value.trim() === "") {
     if (el.dataset.oldValue) {
@@ -192,7 +192,6 @@ async function loadMasterData() {
 async function loadMachineByLine(line) {
   if (!line) return;
   masterData.downtimeMap = {};
-  masterData.downtimeMachines = [];
 
   try {
     await Excel.run(async function (context) {
@@ -201,15 +200,9 @@ async function loadMachineByLine(line) {
       if (sheet.isNullObject) return;
 
       var tablesToLoad = [];
-      if (line === "A") {
-        tablesToLoad.push("DTASoyTable");
-        tablesToLoad.push("DTASyrupTable");
-      } else if (line === "B") tablesToLoad.push("DTBTable");
-      else if (line === "C") tablesToLoad.push("DTCTable");
-      else if (line === "D") tablesToLoad.push("DTDTable");
-      else if (line === "E") tablesToLoad.push("DTETable");
-      else if (line === "F") tablesToLoad.push("DTFTable");
-      else if (line === "G") tablesToLoad.push("DTGTable");
+      var lineClean = line.trim().toUpperCase();
+      if (lineClean === "A") { tablesToLoad.push("DTASoyTable", "DTASyrupTable"); }
+      else { tablesToLoad.push("DT" + lineClean + "Table"); }
 
       var loadedItems = [];
       tablesToLoad.forEach(function (tblName) {
@@ -220,87 +213,128 @@ async function loadMachineByLine(line) {
       await context.sync();
 
       var ranges = [];
-      loadedItems.forEach(function (item) {
+      for (var item of loadedItems) {
         if (!item.obj.isNullObject) {
           ranges.push({
             body: item.obj.getDataBodyRange().load("values"),
             header: item.obj.getHeaderRowRange().load("values"),
           });
         }
-      });
-
+      }
       if (ranges.length > 0) await context.sync();
 
       ranges.forEach(function (item) {
         var headers = item.header.values[0];
         var rows = item.body.values;
-        var idxMach = -1;
-        var idxDesc = -1;
+        var idxMach = -1, idxDesc = -1;
 
         for (var h = 0; h < headers.length; h++) {
-          var headerClean = String(headers[h]).trim().toUpperCase();
-          if (headerClean === "MACHINE") idxMach = h;
-          if (headerClean === "DESCRIPTION") idxDesc = h;
+          var head = String(headers[h]).trim().toUpperCase();
+          if (head === "MACHINE") idxMach = h;
+          if (head === "DESCRIPTION") idxDesc = h;
         }
 
         if (idxMach > -1 && idxDesc > -1) {
           rows.forEach(function (row) {
             var mKey = String(row[idxMach] || "").trim();
             var dVal = String(row[idxDesc] || "").trim();
-            if (mKey) {
-              if (masterData.downtimeMachines.indexOf(mKey) === -1) masterData.downtimeMachines.push(mKey);
+            if (mKey && dVal) {
               if (!masterData.downtimeMap[mKey]) masterData.downtimeMap[mKey] = [];
-              if (dVal && masterData.downtimeMap[mKey].indexOf(dVal) === -1) masterData.downtimeMap[mKey].push(dVal);
+              if (masterData.downtimeMap[mKey].indexOf(dVal) === -1) masterData.downtimeMap[mKey].push(dVal);
             }
           });
         }
       });
+      // Refresh dropdown setelah deskripsi terisi
       refreshDowntimeDropdowns();
     });
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 }
 
 function refreshDowntimeDropdowns() {
   var machineOpts = '<option value="">--Pilih Mesin--</option>';
-  masterData.downtimeMachines.sort().forEach(function (m) {
-    machineOpts += '<option value="' + m + '">' + m + "</option>";
-  });
-  var catOpts = '<option value="">--Pilih Category--</option>';
-  masterData.categories.forEach(function (c) {
-    catOpts += '<option value="' + c + '">' + c + "</option>";
-  });
-  var picOpts = '<option value="">--Pilih PIC--</option>';
-  masterData.pics.forEach(function (p) {
-    picOpts += '<option value="' + p + '">' + p + "</option>";
-  });
-  var statusOpts = '<option value="">--Pilih Status--</option>';
-  masterData.statuses.forEach(function (s) {
-    statusOpts += '<option value="' + s + '">' + s + "</option>";
-  });
+  var addedMachines = [];
 
-  for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-    var dlMach = document.getElementById("machineList" + i);
+  for (var i = 1; i <= 13; i++) {
+    var mName = getValue("TUTMachine" + i).trim();
+    if (mName) {
+      if (mName.indexOf("/") > -1) {
+        var parts = mName.split("/");
+        parts.forEach(function (part) {
+          var cleanPart = part.trim();
+          if (addedMachines.indexOf(cleanPart) === -1) {
+            machineOpts += '<option value="' + cleanPart + '">' + cleanPart + "</option>";
+            addedMachines.push(cleanPart);
+          }
+        });
+      } else {
+        if (addedMachines.indexOf(mName) === -1) {
+          machineOpts += '<option value="' + mName + '">' + mName + "</option>";
+          addedMachines.push(mName);
+        }
+      }
+    }
+  }
+
+  var catOpts = '<option value="">--Pilih Category--</option>';
+  masterData.categories.forEach(function (c) { catOpts += '<option value="' + c + '">' + c + "</option>"; });
+
+  var picOpts = '<option value="">--Pilih PIC--</option>';
+  masterData.pics.forEach(function (p) { picOpts += '<option value="' + p + '">' + p + "</option>"; });
+
+  var statusOpts = '<option value="">--Pilih Status--</option>';
+  masterData.statuses.forEach(function (s) { statusOpts += '<option value="' + s + '">' + s + "</option>"; });
+
+  for (var j = 1; j <= MAX_DOWNTIME_ROWS; j++) {
+    var dlMach = document.getElementById("machineList" + j);
     if (dlMach) dlMach.innerHTML = machineOpts;
-    var selCat = document.getElementById("CategoryList" + i);
-    if (selCat) selCat.innerHTML = catOpts;
-    var dlPic = document.getElementById("PicList" + i);
+
+    var dlCat = document.getElementById("CategoryList" + j);
+    if (dlCat) dlCat.innerHTML = catOpts;
+
+    var dlPic = document.getElementById("PicList" + j);
     if (dlPic) dlPic.innerHTML = picOpts;
-    var dlStatus = document.getElementById("StatusList" + i);
+
+    var dlStatus = document.getElementById("StatusList" + j);
     if (dlStatus) dlStatus.innerHTML = statusOpts;
   }
 }
 
 function updateDescriptionOptions(rowIdx) {
-  var selectedMachine = getValue("Machine" + rowIdx);
+  var selectedMachine = getValue("Machine" + rowIdx).trim().toUpperCase();
   var descDatalist = document.getElementById("descList" + rowIdx);
+
   if (!descDatalist) return;
+
   var descOpts = "";
-  if (masterData.downtimeMap[selectedMachine]) {
-    masterData.downtimeMap[selectedMachine].forEach(function (d) {
-      descOpts += '<option value="' + d + '">' + d + "</option>";
-    });
+  if (!selectedMachine) {
+    descDatalist.innerHTML = "";
+    return;
+  }
+
+  for (var dbMachineName in masterData.downtimeMap) {
+    var cleanDbName = dbMachineName.trim().toUpperCase();
+    var isMatch = false;
+
+    if (cleanDbName === selectedMachine) {
+      isMatch = true;
+    } else if (cleanDbName.indexOf("/") > -1) {
+      var parts = cleanDbName.split("/");
+      for (var p = 0; p < parts.length; p++) {
+        if (parts[p].trim() === selectedMachine) {
+          isMatch = true;
+          break;
+        }
+      }
+    }
+
+    if (isMatch) {
+      masterData.downtimeMap[dbMachineName].forEach(function (desc) {
+        if (descOpts.indexOf('value="' + desc + '"') === -1) {
+          descOpts += '<option value="' + desc + '">' + desc + "</option>";
+        }
+      });
+    }
   }
   descDatalist.innerHTML = descOpts;
 }
@@ -437,7 +471,7 @@ function populateDatalist(datalistId, data, colIdx) {
     data.forEach(function (row) {
       if (row[colIdx]) {
         // Buat option string untuk datalist
-        opts += '<option value="' + row[colIdx] + '">' + row[colIdx] + '</option>';
+        opts += '<option value="' + row[colIdx] + '">' + row[colIdx] + "</option>";
       }
     });
   }
@@ -449,7 +483,7 @@ function onLineChange() {
   hitungTargetOEE();
   loadHiddenMachineMaps();
   loadRejectMaps();
-  loadMachineByLine(line).then(function () {});
+  loadMachineByLine(line);
 }
 
 function onLeaderChange() {
@@ -654,48 +688,33 @@ function hitungTotalWaste() {
 
 function loadHiddenMachineMaps() {
   var lineInput = getValue("Line");
-  var leaderInput = getValue("Leader");
   for (var x = 1; x <= 13; x++) {
     setValue("TUTMachine" + x, "");
     setValue("PDTMachine" + x, "");
     setValue("UPDTMachine" + x, "");
   }
-  if (!lineInput || !leaderInput || masterData.machine.data.length === 0) return;
+
+  if (!lineInput || masterData.machine.data.length === 0) return;
+
   var colMap = masterData.machine.map;
   var idxLine = colMap["Line"];
-  var idxLeader = colMap["Nama Leader"];
-  if (idxLine === undefined || idxLeader === undefined) return;
   var cleanLineInput = String(lineInput).trim().toUpperCase();
-  var cleanLeaderInput = String(leaderInput).trim().toUpperCase();
-  var foundRow = null;
   var rows = masterData.machine.data;
+  var foundRow = null;
+
   for (var i = 0; i < rows.length; i++) {
-    var row = rows[i];
-    var mLineRaw = String(row[idxLine] || "")
-      .trim()
-      .toUpperCase();
-    var mLeaderRaw = String(row[idxLeader] || "")
-      .trim()
-      .toUpperCase();
-    var mLineClean = mLineRaw.replace("LINE", "").trim();
-    var isLineMatch = mLineClean === cleanLineInput || mLineClean.indexOf(cleanLineInput) > -1;
-    var isLeaderMatch = false;
-    if (mLeaderRaw !== "") {
-      if (cleanLeaderInput.indexOf(mLeaderRaw) > -1 || mLeaderRaw.indexOf(cleanLeaderInput) > -1) {
-        isLeaderMatch = true;
-      }
-    }
-    if (isLineMatch && isLeaderMatch) {
-      foundRow = row;
+    var mLineRaw = String(rows[i][idxLine] || "").trim().toUpperCase();
+    if (mLineRaw.indexOf(cleanLineInput) > -1 || cleanLineInput.indexOf(mLineRaw) > -1) {
+      foundRow = rows[i];
       break;
     }
   }
+
   if (foundRow) {
     for (var k = 1; k <= 13; k++) {
-      var colName = "Machine" + k;
-      var idxMachine = colMap[colName];
-      if (idxMachine !== undefined) {
-        var machName = foundRow[idxMachine];
+      var idxMach = colMap["Machine" + k];
+      if (idxMach !== undefined) {
+        var machName = foundRow[idxMach];
         if (machName) {
           setValue("TUTMachine" + k, machName);
           setValue("PDTMachine" + k, machName);
@@ -761,111 +780,62 @@ function addDowntimeRow(data) {
       break;
     }
   }
-  if (idx === -1) {
-    showNotification("Max row downtime tercapai", "error");
-    return;
-  }
+  if (idx === -1) return;
+
   var container = document.getElementById("dynamic-downtime-container");
   var rowDiv = document.createElement("div");
-  rowDiv.style.cssText = "border:1px solid #ccc; padding:10px; margin-bottom:10px; background:#fff;";
   rowDiv.id = "DowntimeRow_" + idx;
+  rowDiv.style.cssText = "border:1px solid #ccc; padding:10px; margin-bottom:10px; background:#fff;";
 
-  var catOpts = '<option value="">--Pilih Category--</option>';
-  masterData.categories.forEach(function (c) {
-    catOpts += '<option value="' + c + '">' + c + "</option>";
-  });
-  var machineOpts = '<option value="">--Pilih Mesin--</option>';
-  masterData.downtimeMachines.sort().forEach(function (m) {
-    machineOpts += '<option value="' + m + '">' + m + "</option>";
-  });
-  var picOpts = '<option value="">--Pilih PIC--</option>';
-  masterData.pics.forEach(function (p) {
-    picOpts += '<option value="' + p + '">' + p + "</option>";
-  });
-  var statusOpts = '<option value="">--Pilih Status--</option>';
-  masterData.statuses.forEach(function (s) {
-    statusOpts += '<option value="' + s + '">' + s + "</option>";
-  });
+  // Buat HTML dengan datalist kosong (akan diisi oleh refreshDowntimeDropdowns)
+  rowDiv.innerHTML = `
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+      <strong>Downtime #${idx}</strong>
+      <button type="button" class="btn-danger" style="padding:2px 8px;" onclick="removeDowntimeRow(${idx})">X</button>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div><label>Category:</label>
+        <input list="CategoryList${idx}" id="Category${idx}" class="d-input" style="width:100%" placeholder="--Pilih Category--" onmousedown="handleDatalistMouseDown(this)" onblur="handleDatalistBlur(this, '--Pilih Category--')">
+        <datalist id="CategoryList${idx}"></datalist>
+      </div>
+      <div><label>Machine:</label>
+        <input list="machineList${idx}" id="Machine${idx}" class="d-input" style="width:100%" placeholder="--Pilih Mesin--" onmousedown="handleDatalistMouseDown(this)" onblur="handleDatalistBlur(this, '--Pilih Mesin--')" onchange="updateDescriptionOptions(${idx})">
+        <datalist id="machineList${idx}"></datalist>
+      </div>
+      <div style="grid-column: span 2;"><label>Description:</label>
+        <input list="descList${idx}" id="Description${idx}" class="d-input" style="width:100%" placeholder="--Pilih/Ketik Deskripsi--" onmousedown="handleDatalistMouseDown(this)" onblur="handleDatalistBlur(this, '--Pilih/Ketik Deskripsi--')">
+        <datalist id="descList${idx}"></datalist>
+      </div>
+      <div style="grid-column: span 2;"><label>Action:</label>
+        <input id="Action${idx}" type="text" class="d-input" style="width:100%" placeholder="Isi Action...">
+      </div>
+      <div><label>Start (Jam):</label>
+        <input id="JamStart${idx}" type="text" maxlength="5" placeholder="HH:MM" class="d-input" style="width:100%" data-time-input="true">
+      </div>
+      <div><label>Durasi (Menit):</label>
+        <input id="Durasi${idx}" type="number" min="0" class="d-input" style="width:100%">
+      </div>
+      <div><label>PIC:</label>
+        <input list="PicList${idx}" id="Pic${idx}" class="d-input" style="width:100%" placeholder="--Pilih PIC--" onmousedown="handleDatalistMouseDown(this)" onblur="handleDatalistBlur(this, '--Pilih PIC--')">
+        <datalist id="PicList${idx}"></datalist>
+      </div>
+      <div><label>Status:</label>
+        <input list="StatusList${idx}" id="Status${idx}" class="d-input" style="width:100%" placeholder="--Pilih Status--" onmousedown="handleDatalistMouseDown(this)" onblur="handleDatalistBlur(this, '--Pilih Status--')">
+        <datalist id="StatusList${idx}"></datalist>
+      </div>
+    </div>
+  `;
 
-  // --- STRING HTML YANG DIPERBARUI (MENGGUNAKAN HANDLER BARU) ---
-  var htmlContent =
-    '<div style="display:flex; justify-content:space-between; margin-bottom:5px;">' +
-    "<strong>Downtime #" + idx + "</strong>" +
-    '<button type="button" class="btn-danger" style="padding:2px 8px;" onclick="removeDowntimeRow(' + idx + ')">X</button>' +
-    "</div>" +
-
-    '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">' +
-
-    // CATEGORY
-    "<div><label>Category:</label>" +
-    '<input list="CategoryList' + idx + '" id="Category' + idx + '" class="d-input" style="width:100%" ' +
-    'placeholder="--Pilih Category--" ' +
-    'onmousedown="handleDatalistMouseDown(this)" ' +
-    'onblur="handleDatalistBlur(this, \'--Pilih Category--\')">' +
-    '<datalist id="CategoryList' + idx + '">' + catOpts + "</datalist>" +
-    "</div>" +
-
-    // MACHINE
-    "<div><label>Machine:</label>" +
-    '<input list="machineList' + idx + '" id="Machine' + idx + '" class="d-input" style="width:100%" ' +
-    'placeholder="--Pilih Mesin--" ' +
-    'onmousedown="handleDatalistMouseDown(this)" ' +
-    'onblur="handleDatalistBlur(this, \'--Pilih Mesin--\')" ' +
-    'onchange="updateDescriptionOptions(' + idx + ')">' +
-    '<datalist id="machineList' + idx + '">' + machineOpts + "</datalist>" +
-    "</div>" +
-
-    // DESCRIPTION
-    '<div style="grid-column: span 2;"><label>Description:</label>' +
-    '<input list="descList' + idx + '" id="Description' + idx + '" class="d-input" style="width:100%" ' +
-    'placeholder="--Pilih/Ketik Deskripsi--" ' +
-    'onmousedown="handleDatalistMouseDown(this)" ' +
-    'onblur="handleDatalistBlur(this, \'--Pilih/Ketik Deskripsi--\')">' +
-    '<datalist id="descList' + idx + '"></datalist>' +
-    "</div>" +
-
-    // ACTION
-    '<div style="grid-column: span 2;"><label>Action:</label>' +
-    '<input id="Action' + idx + '" type="text" class="d-input" style="width:100%" placeholder="Isi Action yang dilakukan...">' +
-    "</div>" +
-
-    // START JAM (AUTO FORMAT)
-    "<div><label>Start (Jam):</label>" +
-    '<input id="JamStart' + idx + '" type="text" maxlength="5" placeholder="HH:MM" class="d-input" style="width:100%" data-time-input="true">' +
-    "</div>" +
-
-    // DURASI
-    '<div><label>Durasi (Menit):</label><input id="Durasi' + idx + '" type="number" min="0" class="d-input" style="width:100%"></div>' +
-
-    // PIC
-    "<div><label>PIC:</label>" +
-    '<input list="PicList' + idx + '" id="Pic' + idx + '" class="d-input" style="width:100%" ' +
-    'placeholder="--Pilih PIC--" ' +
-    'onmousedown="handleDatalistMouseDown(this)" ' +
-    'onblur="handleDatalistBlur(this, \'--Pilih PIC--\')">' +
-    '<datalist id="PicList' + idx + '">' + picOpts + "</datalist>" +
-    "</div>" +
-
-    // STATUS
-    "<div><label>Status:</label>" +
-    '<input list="StatusList' + idx + '" id="Status' + idx + '" class="d-input" style="width:100%" ' +
-    'placeholder="--Pilih Status--" ' +
-    'onmousedown="handleDatalistMouseDown(this)" ' +
-    'onblur="handleDatalistBlur(this, \'--Pilih Status--\')">' +
-    '<datalist id="StatusList' + idx + '">' + statusOpts + "</datalist>" +
-    "</div>" +
-
-    "</div>";
-
-  rowDiv.innerHTML = htmlContent;
   container.appendChild(rowDiv);
 
+  // Pasang event listener agregasi
   var inputs = rowDiv.querySelectorAll(".d-input");
-  for (var i = 0; i < inputs.length; i++) {
-    inputs[i].addEventListener("change", hitungAgregasi);
-    inputs[i].addEventListener("input", hitungAgregasi);
-  }
+  inputs.forEach(input => {
+    input.addEventListener("change", hitungAgregasi);
+    input.addEventListener("input", hitungAgregasi);
+  });
 
+  // Isi data jika sedang edit mode
   if (data) {
     setValue("Category" + idx, data.Category || "");
     setValue("Machine" + idx, data.Machine || "");
@@ -878,6 +848,8 @@ function addDowntimeRow(data) {
     setValue("JamStart" + idx, normalizeTimeInput(data.JamStart || ""));
   }
 
+  // Isi dropdown untuk baris baru ini
+  refreshDowntimeDropdowns();
   setupDynamicTimeInputs();
   setupKeyboardNavigation();
 }
@@ -899,43 +871,49 @@ function getCategoryPrefix(catInput) {
   return "";
 }
 function hitungAgregasi() {
-  var aggregatedTotals = {};
-  if (masterData.categoryMapping.length > 0) {
-    masterData.categoryMapping.forEach(function (c) {
-      aggregatedTotals[c.short] = 0;
-    });
-  }
   for (var m = 1; m <= 13; m++) {
-    if (masterData.categoryMapping.length > 0) {
-      masterData.categoryMapping.forEach(function (c) {
-        setValue(c.short + m, 0);
-      });
-    }
+    masterData.categoryMapping.forEach(function (c) { setValue(c.short + m, 0); });
   }
+
+  var aggregatedTotals = {};
+  masterData.categoryMapping.forEach(function (c) { aggregatedTotals[c.short] = 0; });
+
   for (var i = 1; i <= MAX_DOWNTIME_ROWS; i++) {
-    var row = document.getElementById("DowntimeRow_" + i);
-    if (!row) continue;
-    var catVal = getValue("Category" + i);
-    var machVal = getValue("Machine" + i);
+    if (!document.getElementById("DowntimeRow_" + i)) continue;
+
+    var catVal = getValue("Category" + i).trim().toUpperCase();
+    var machVal = getValue("Machine" + i).trim().toUpperCase();
     var durVal = parseFloat(getValue("Durasi" + i)) || 0;
 
     if (catVal && machVal && durVal > 0) {
       var prefix = getCategoryPrefix(catVal);
       if (prefix !== "") {
         var targetIndex = -1;
-        var cleanInputMachine = machVal.trim().toUpperCase();
+
         for (var k = 1; k <= 13; k++) {
-          var masterMachine = getValue("TUTMachine" + k)
-            .trim()
-            .toUpperCase();
-          if (
-            masterMachine !== "" &&
-            (cleanInputMachine.indexOf(masterMachine) > -1 || masterMachine.indexOf(cleanInputMachine) > -1)
-          ) {
+          var masterMachine = getValue("TUTMachine" + k).trim().toUpperCase();
+
+          if (machVal === masterMachine) {
             targetIndex = k;
             break;
           }
+
+          if (masterMachine.indexOf("/") > -1) {
+            var parts = masterMachine.split("/");
+            var isMatch = false;
+            for (var p = 0; p < parts.length; p++) {
+              if (parts[p].trim() === machVal) {
+                isMatch = true;
+                break;
+              }
+            }
+            if (isMatch) {
+              targetIndex = k;
+              break;
+            }
+          }
         }
+
         if (targetIndex !== -1) {
           var targetID = prefix + targetIndex;
           var currentVal = parseFloat(getValue(targetID)) || 0;
@@ -945,6 +923,7 @@ function hitungAgregasi() {
       }
     }
   }
+
   for (var key in aggregatedTotals) {
     setValue("Total_" + key, aggregatedTotals[key]);
   }
@@ -2139,3 +2118,4 @@ function normalizeTimeInput(input) {
 
   return hours + ":" + minutes;
 }
+
