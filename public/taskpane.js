@@ -1323,10 +1323,8 @@ async function handleSubmit() {
       var saveID = isEditMode ? currentID : generateUniqueID();
       var rawDate = getValue("Tanggal");
       var strDate = convertDateInputToExcel(rawDate);
-
       var rawParts = rawDate.split("-");
       var justDay = rawParts[2];
-
       var rawDateMasak = getValue("TanggalMasak");
       var dVal = rawParts[2];
       var mVal = rawParts[1];
@@ -1339,6 +1337,30 @@ async function handleSubmit() {
       if (noSOVal && noSOVal.toUpperCase().indexOf("NO SO") === -1) noSOVal = "No SO " + noSOVal;
       else if (!noSOVal) noSOVal = "NONE";
 
+      // --- SETUP TABEL DAN KOLOM ---
+      var sheetMain = context.workbook.worksheets.getItemOrNullObject("Input Shiftly");
+      var tblMain = sheetMain.tables.getItemOrNullObject("TableLaporanAkhir");
+      var colMain = tblMain.columns.load("items/name");
+      await context.sync();
+
+      // --- LOGIKA PENAMBAHAN KOLOM HOURLY ---
+      var existingCols = colMain.items.map(c => c.name);
+      if (existingCols.indexOf("Hourly") === -1) {
+        // Cari index "Isi 1 Dus"
+        var targetIdx = existingCols.indexOf("Isi 1 Dus");
+        if (targetIdx !== -1) {
+          // Tambahkan kolom Hourly tepat sebelum "Isi 1 Dus"
+          tblMain.columns.add(targetIdx, null, "Hourly");
+        } else {
+          // Jika "Isi 1 Dus" tidak ketemu, tambahkan di paling akhir
+          tblMain.columns.add(null, null, "Hourly");
+        }
+        // Refresh colMain setelah penambahan kolom
+        colMain = tblMain.columns.load("items/name");
+        await context.sync();
+      }
+
+      // --- DATA OBJECT ---
       var dataMain = {
         Source: saveID,
         Date: strDate,
@@ -1354,7 +1376,7 @@ async function handleSubmit() {
         SPV: getValueOrNone("Supervisor"),
         Team: getValueOrNone("Team"),
         "Speed / Jam": getValue("SpeedJam"),
-        Hourly: getValue("Hourly"),
+        Hourly: getValue("Hourly"), // Data dari input Hourly
         "Isi 1 Dus": getValue("Isi1Dus"),
         "No SO": noSOVal,
         Start: getValue("StartProduction"),
@@ -1382,6 +1404,7 @@ async function handleSubmit() {
         Catatan: "",
       };
 
+      // Tambahkan kategori mapping
       if (masterData.categoryMapping.length > 0) {
         masterData.categoryMapping.forEach(function (cat) {
           var val = parseFloat(getValue("Total_" + cat.short)) || 0;
@@ -1400,22 +1423,12 @@ async function handleSubmit() {
         dataMain["Waste(" + w + ")"] = parseFloat(getValue("Waste" + w)) || 0;
       }
 
-      var sheetMain = context.workbook.worksheets.getItemOrNullObject("Input Shiftly");
+      // --- SIMPAN DATA KE EXCEL ---
       var sheetDown = context.workbook.worksheets.getItemOrNullObject("Input Downtime");
-      await context.sync();
-
-      if (sheetMain.isNullObject) throw new Error("Sheet 'Input Shiftly' tidak ditemukan!");
-      if (sheetDown.isNullObject) throw new Error("Sheet 'Input Downtime' tidak ditemukan!");
-
-      var tblMain = sheetMain.tables.getItemOrNullObject("TableLaporanAkhir");
       var tblDowntime = sheetDown.tables.getItemOrNullObject("DowntimeTable");
       var tblDetailDT = sheetDown.tables.getItemOrNullObject("DetailDowntimeTable");
       var tblReject = sheetDown.tables.getItemOrNullObject("IsiRejectTable");
 
-      await context.sync();
-      if (tblMain.isNullObject) throw new Error("Tabel 'TableLaporanAkhir' tidak ditemukan!");
-
-      var colMain = tblMain.columns.load("items/name");
       var colDT = tblDowntime.columns.load("items/name");
       var colDetail = tblDetailDT.columns.load("items/name");
       var colReject = tblReject.columns.load("items/name");
@@ -1427,6 +1440,7 @@ async function handleSubmit() {
 
       await context.sync();
 
+      // --- UPDATE CATATAN ---
       var idxOEE = -1, idxCatatan = -1, idxSource = -1;
       for (var c = 0; c < colMain.items.length; c++) {
         var cName = colMain.items[c].name.toUpperCase();
@@ -1439,25 +1453,22 @@ async function handleSubmit() {
         var bodyRange = tblMain.getDataBodyRange().load("values");
         await context.sync();
         var rowIndex = -1;
-        var oeeResult = 0;
         for (var r = 0; r < bodyRange.values.length; r++) {
           if (bodyRange.values[r][idxSource] === saveID) {
             rowIndex = r;
-            oeeResult = bodyRange.values[r][idxOEE];
             break;
           }
         }
-
         if (rowIndex !== -1) {
           var currentNote = generateCatatanLogic();
           if (currentNote.length > 32000) currentNote = currentNote.substring(0, 32000) + "...";
-
           var cellCatatan = tblMain.getDataBodyRange().getCell(rowIndex, idxCatatan);
           cellCatatan.values = [[currentNote]];
           cellCatatan.format.wrapText = false;
         }
       }
 
+      // Simpan Child Data (Downtime, Detail, Reject)
       if (isEditMode) await deleteRowByID(context, tblDowntime, saveID);
       var rowsDTArray = [];
       for (var m = 1; m <= MAX_DOWNTIME_ROWS; m++) {
@@ -1511,7 +1522,6 @@ async function handleSubmit() {
       tblReject.rows.add(null, [rowRejectArray]);
 
       await context.sync();
-
       showNotification(isEditMode ? "Data berhasil diperbarui!" : "Data berhasil disimpan!", "success");
       isEditMode = false;
       currentID = "";
@@ -1520,16 +1530,7 @@ async function handleSubmit() {
     });
   } catch (error) {
     console.error(error);
-    var msg = error.message;
-    if (error.code === "InvalidArgument") {
-      msg = "ERROR KOLOM EXCEL! Jumlah kolom di coding tidak sama dengan di Excel. Cek apakah ada kolom baru/hilang di Tabel Excel.";
-    } else if (msg.indexOf("Sheet") > -1) {
-      msg = "ERROR SHEET: " + msg;
-    } else {
-      msg = "Gagal Menyimpan: " + msg;
-    }
-
-    showNotification(msg, "error");
+    showNotification("Gagal Menyimpan: " + error.message, "error");
   } finally {
     if (btn) {
       btn["innerText"] = "💾 SIMPAN DATA";
