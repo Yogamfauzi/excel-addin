@@ -341,13 +341,13 @@ function setupEventListeners() {
   document.getElementById("Shift").addEventListener("change", onShiftChange);
   document.getElementById("SKUCode").addEventListener("change", updateSKUName);
 
-  var prodInputs = ["SpeedJam", "Isi1Dus", "TotalJam"];
+  var prodInputs = ["Hourly", "SpeedJam", "Isi1Dus", "TotalJam"];
   prodInputs.forEach(function (id) {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener("input", function () {
         hitungTotalPcs();
-        if (this.id === "SpeedJam") updateStandartFromSpeed();
+        if (this.id === "Hourly") updateStandartFromHourly();
       });
     }
   });
@@ -378,8 +378,8 @@ function setupEventListeners() {
   setupKeyboardNavigation();
 }
 
-function updateStandartFromSpeed() {
-  var speedVal = parseFloat(getValue("SpeedJam")) || 0;
+function updateStandartFromHourly() {
+  var speedVal = parseFloat(getValue("Hourly")) || 0;
   for (var i = 1; i <= 20; i++) {
     var hourVal = getValue("Hour" + i);
     if (hourVal && hourVal.indexOf("-") > -1) {
@@ -614,7 +614,7 @@ function hitungIntervalHour() {
     setValue("Hour" + k, mirrorVal);
   }
 
-  updateStandartFromSpeed();
+  updateStandartFromHourly();
 }
 
 function hitungDowntimePerJam(event) {
@@ -1123,6 +1123,7 @@ async function handleEdit() {
     setValue("Supervisor", getData("SPV"));
     setValue("Team", getData("Team"));
     setValue("SpeedJam", getData("Speed / Jam"));
+    setValue("Hourly", getData("Hourly"));
     setValue("Isi1Dus", getData("Isi 1 Dus"));
 
     var soVal = getData("No SO");
@@ -1353,6 +1354,7 @@ async function handleSubmit() {
         SPV: getValueOrNone("Supervisor"),
         Team: getValueOrNone("Team"),
         "Speed / Jam": getValue("SpeedJam"),
+        Hourly: getValue("Hourly"),
         "Isi 1 Dus": getValue("Isi1Dus"),
         "No SO": noSOVal,
         Start: getValue("StartProduction"),
