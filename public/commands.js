@@ -1,6 +1,7 @@
 /*
  * File: commands.js
  * Fungsi: Logika background lengkap (Main, Matrix, Detail List, Reject)
+ * Update: Pemetaan Hourly (U6) dan Speed/Jam (AA74)
  */
 
 Office.onReady(() => {});
@@ -17,8 +18,6 @@ async function populateDashboard(event) {
       const tblMain = sheetShiftly.tables.getItemOrNullObject("TableLaporanAkhir");
       const tblMatrix = sheetDowntime.tables.getItemOrNullObject("DetailDowntimeTable");
       const tblDetailList = sheetDowntime.tables.getItemOrNullObject("DowntimeTable");
-      
-      // Tabel Reject (BARU)
       const tblReject = sheetDowntime.tables.getItemOrNullObject("IsiRejectTable");
 
       // Load properti
@@ -49,25 +48,21 @@ async function populateDashboard(event) {
       }
 
       // --- 3. LOAD DATA (BATCHING) ---
-      // Load Main Table
       const rangeMainHead = tblMain.getHeaderRowRange().load("values");
       const rangeMainBody = tblMain.getDataBodyRange().load("values");
 
-      // Load Matrix Table
       let rangeMatrixHead = null, rangeMatrixBody = null;
       if (!tblMatrix.isNullObject) {
         rangeMatrixHead = tblMatrix.getHeaderRowRange().load("values");
         rangeMatrixBody = tblMatrix.getDataBodyRange().load("values");
       }
 
-      // Load Detail List Table
       let rangeDetailHead = null, rangeDetailBody = null;
       if (!tblDetailList.isNullObject) {
         rangeDetailHead = tblDetailList.getHeaderRowRange().load("values");
         rangeDetailBody = tblDetailList.getDataBodyRange().load("values");
       }
 
-      // Load Reject Table (BARU)
       let rangeRejectHead = null, rangeRejectBody = null;
       if (!tblReject.isNullObject) {
         rangeRejectHead = tblReject.getHeaderRowRange().load("values");
@@ -129,6 +124,9 @@ async function populateDashboard(event) {
       sheetDash.getRange("F6").values = [[getVal(rowMain, mapMain, "PLAN")]];
       sheetDash.getRange("M23").values = [[getVal(rowMain, mapMain, "TOTAL QUALITY")]];
       sheetDash.getRange("O23").values = [[getVal(rowMain, mapMain, "TOTAL SAFETY")]];
+      
+      // UPDATE: Mapping Hourly (U6) dan Speed/Jam (AA74)
+      sheetDash.getRange("U6").values = [[getVal(rowMain, mapMain, "TOTAL JAM")]]; 
       sheetDash.getRange("AA74").values = [[getVal(rowMain, mapMain, "SPEED / JAM")]];
 
       // Tulis Data Per Jam (Loop 1-10)
@@ -156,12 +154,8 @@ async function populateDashboard(event) {
       sheetDash.getRange("X17").values = [[getVal(rowMain, mapMain, "WASTE(14)")]];
       sheetDash.getRange("X19").values = [[getVal(rowMain, mapMain, "WASTE(15)")]];
 
-
-      // =========================================================
-      // BAGIAN II: MATRIX DOWNTIME (DetailDowntimeTable)
-      // =========================================================
+      // --- BAGIAN II: MATRIX DOWNTIME ---
       if (!tblMatrix.isNullObject && rangeMatrixBody) {
-        
         const headersMatrix = rangeMatrixHead.values[0];
         const bodyMatrix = rangeMatrixBody.values;
         const mapMatrix = createColMap(headersMatrix);
@@ -182,22 +176,18 @@ async function populateDashboard(event) {
 
           for (let m = 1; m <= 13; m++) {
             let idx = m - 1;
-            
-            // GROUP 1
             let r1 = grp1Rows[idx];
             sheetDash.getRange("Z" + r1).values  = [[getVal(rowMatrix, mapMatrix, "MACHINE" + m)]];
             sheetDash.getRange("AA" + r1).values = [[getVal(rowMatrix, mapMatrix, "UTND" + m)]];
             sheetDash.getRange("AB" + r1).values = [[getVal(rowMatrix, mapMatrix, "CIMOH" + m)]];
             sheetDash.getRange("AC" + r1).values = [[getVal(rowMatrix, mapMatrix, "NPT" + m)]];
 
-            // GROUP 2
             let r2 = grp2Rows[idx];
             sheetDash.getRange("AA" + r2).values = [[getVal(rowMatrix, mapMatrix, "PM" + m)]];
             sheetDash.getRange("AB" + r2).values = [[getVal(rowMatrix, mapMatrix, "PS" + m)]];
             sheetDash.getRange("AC" + r2).values = [[getVal(rowMatrix, mapMatrix, "PCO" + m)]];
             sheetDash.getRange("AD" + r2).values = [[getVal(rowMatrix, mapMatrix, "BM" + m)]];
 
-            // GROUP 3
             let r3 = grp3Rows[idx];
             sheetDash.getRange("AA" + r3).values = [[getVal(rowMatrix, mapMatrix, "OLPS" + m)]];
             sheetDash.getRange("AB" + r3).values = [[getVal(rowMatrix, mapMatrix, "EQFB" + m)]];
@@ -208,9 +198,7 @@ async function populateDashboard(event) {
         }
       }
 
-      // =========================================================
-      // BAGIAN III: DETAIL DOWNTIME LIST (DowntimeTable)
-      // =========================================================
+      // --- BAGIAN III: DETAIL DOWNTIME LIST ---
       if (!tblDetailList.isNullObject && rangeDetailBody) {
         const headersDetail = rangeDetailHead.values[0];
         const bodyDetail = rangeDetailBody.values;
@@ -225,7 +213,6 @@ async function populateDashboard(event) {
         matchingRows.forEach(row => {
           let startVal = getVal(row, mapDetail, "START");
           let timeDec = 0;
-
           if (typeof startVal === 'number') {
              timeDec = (startVal - Math.floor(startVal)) * 24;
           }
@@ -256,34 +243,23 @@ async function populateDashboard(event) {
         });
 
         const dtTargetRows = [59, 62, 65, 67, 69, 71, 73, 75, 77, 79];
-        
         for(let i=0; i<10; i++) {
           let r = dtTargetRows[i];
           let b = buckets[i];
-
-          let valF = b.F.length > 0 ? b.F.join(", ") : "NONE";
-          let valP = b.P.length > 0 ? b.P.join(", ") : "NONE";
-          let valU = b.U.length > 0 ? [...new Set(b.U)].join(" & ") : "NONE";
-          let valW = b.W.length > 0 ? [...new Set(b.W)].join(" & ") : "NONE";
-
-          sheetDash.getRange("F" + r).values = [[valF]];
-          sheetDash.getRange("P" + r).values = [[valP]];
-          sheetDash.getRange("U" + r).values = [[valU]];
-          sheetDash.getRange("W" + r).values = [[valW]];
+          sheetDash.getRange("F" + r).values = [[b.F.length > 0 ? b.F.join(", ") : "NONE"]];
+          sheetDash.getRange("P" + r).values = [[b.P.length > 0 ? b.P.join(", ") : "NONE"]];
+          sheetDash.getRange("U" + r).values = [[b.U.length > 0 ? [...new Set(b.U)].join(" & ") : "NONE"]];
+          sheetDash.getRange("W" + r).values = [[b.W.length > 0 ? [...new Set(b.W)].join(" & ") : "NONE"]];
         }
       }
 
-      // =========================================================
-      // BAGIAN IV: DATA REJECT (IsiRejectTable) - FITUR BARU
-      // =========================================================
+      // --- BAGIAN IV: DATA REJECT ---
       if (!tblReject.isNullObject && rangeRejectBody) {
-        
         const headersReject = rangeRejectHead.values[0];
         const bodyReject = rangeRejectBody.values;
         const mapReject = createColMap(headersReject);
         const idxSourceReject = mapReject["SOURCE"];
 
-        // Cari Baris ID
         let rowReject = null;
         for (let i = 0; i < bodyReject.length; i++) {
           if (String(bodyReject[i][idxSourceReject]).trim() === searchID) {
@@ -293,22 +269,12 @@ async function populateDashboard(event) {
         }
 
         if (rowReject) {
-          // Mapping Kolom Dashboard (1 s/d 12)
           const targetCols = ["E", "H", "K", "L", "N", "Q", "R", "S", "T", "W", "AB", "AD"];
-
           for (let i = 0; i < 12; i++) {
-            let rNum = i + 1; // 1 s/d 12
+            let rNum = i + 1;
             let colName = targetCols[i];
-
-            // Ambil Data
-            let nameVal = getVal(rowReject, mapReject, "REJECT" + rNum);
-            let isiVal = getVal(rowReject, mapReject, "ISI" + rNum);
-
-            // Tulis Nama Reject (Baris 113)
-            sheetDash.getRange(colName + "113").values = [[nameVal]];
-            
-            // Tulis Jumlah Isi (Baris 114)
-            sheetDash.getRange(colName + "114").values = [[isiVal]];
+            sheetDash.getRange(colName + "113").values = [[getVal(rowReject, mapReject, "REJECT" + rNum)]];
+            sheetDash.getRange(colName + "114").values = [[getVal(rowReject, mapReject, "ISI" + rNum)]];
           }
         }
       }
@@ -337,12 +303,9 @@ function parseTimeRange(rangeStr) {
     let parts = rangeStr.split("-");
     let startStr = parts[0].trim().replace(".", ":");
     let endStr = parts[1].trim().replace(".", ":");
-
     let start = timeStrToDecimal(startStr);
     let end = timeStrToDecimal(endStr);
-
     if (end < start) end += 24; 
-
     return { start: start, end: end };
   } catch (e) {
     return null;
