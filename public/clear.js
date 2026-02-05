@@ -1,7 +1,7 @@
 /*
- * File: clear.js (VERSI INPUT NULL/EMPTY)
- * Fungsi: Menimpa data lama dengan data kosong ("")
- * Kelebihan: Biasanya lebih cepat daripada .clear()
+ * File: clear.js (VERSI DINAMIS MULTI-SHEET)
+ * Fungsi: Menimpa data lama dengan data kosong ("") pada Active Worksheet
+ * Kelebihan: Cepat dan mendukung banyak sheet Dashboard (Dash Oscar A-G)
  */
 
 Office.onReady(() => {});
@@ -10,16 +10,16 @@ async function clearDashboard(event) {
   try {
     await Excel.run(async (context) => {
       
-      const sheetDash = context.workbook.worksheets.getItemOrNullObject("Dash Oscar");
-      sheetDash.load("isNullObject");
+      // --- 1. DETEKSI SHEET AKTIF (Dinamis) ---
+      const sheetDash = context.workbook.worksheets.getActiveWorksheet();
+      sheetDash.load("name");
       await context.sync();
 
-      if (sheetDash.isNullObject) return;
-
-      // Status: Cleaning
+      // Status: Cleaning di sheet yang sedang dibuka
       const statusCell = sheetDash.getRange("AG2");
-      statusCell.values = [["⚡ Cleaning..."]]; // Ubah icon jadi petir biar beda
+      statusCell.values = [["⚡ Cleaning " + sheetDash.name + "..."]]; 
       statusCell.format.font.color = "purple";
+      statusCell.format.font.bold = false;
       await context.sync();
 
       // --- PERSIAPAN DATA KOSONG ---
@@ -39,7 +39,6 @@ async function clearDashboard(event) {
         "F6"
       ];
 
-      // Loop cepat untuk menimpa dengan ""
       headerCells.forEach(addr => {
         sheetDash.getRange(addr).values = valEmpty;
       });
@@ -51,7 +50,6 @@ async function clearDashboard(event) {
       const wasteExtra = ["X10", "X13", "X15", "X17", "X19"];
 
       targetRowsMain.forEach(r => {
-        // Kita timpa satu-satu, ini sangat ringan untuk Excel
         sheetDash.getRange(`B${r}`).values = valEmpty;
         sheetDash.getRange(`H${r}`).values = valEmpty;
         sheetDash.getRange(`M${r}`).values = valEmpty;
@@ -67,8 +65,6 @@ async function clearDashboard(event) {
       // =========================================================
       // 3. TIMPA MATRIX DOWNTIME (Block Range)
       // =========================================================
-      // Kita gunakan array kosong 4 kolom & 5 kolom agar pas ukurannya
-      
       const grp1Rows = [7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
       const grp2Rows = [30, 31, 33, 35, 37, 39, 40, 41, 43, 45, 46, 47, 48];
       const grp3Rows = [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67];
@@ -111,20 +107,24 @@ async function clearDashboard(event) {
       // --- SELESAI ---
       statusCell.values = [["✨ READY"]];
       statusCell.format.font.color = "black";
+      statusCell.format.font.bold = true;
       
-      // Select kembali ke AG1
+      // Kosongkan juga input ID agar bersih total
+      sheetDash.getRange("AG1").values = valEmpty;
       sheetDash.getRange("AG1").select();
 
       await context.sync();
 
     });
   } catch (error) {
-    console.error("Error: " + error);
-    // Jika error, paksa tulis error di cell
-     Excel.run(async (ctx) => {
-        const s = ctx.workbook.worksheets.getItem("Dash Oscar");
-        s.getRange("AG2").values = [["❌ ERROR"]];
-        s.getRange("AG2").format.font.color = "red";
+    console.error("Error Clear: " + error);
+    // Jalankan context baru jika context utama gagal untuk menampilkan pesan error
+    await Excel.run(async (ctx) => {
+        const activeSheet = ctx.workbook.worksheets.getActiveWorksheet();
+        const errCell = activeSheet.getRange("AG2");
+        errCell.values = [["❌ ERROR CLEAR"]];
+        errCell.format.font.color = "red";
+        await ctx.sync();
     });
   } finally {
     if (event) event.completed();
